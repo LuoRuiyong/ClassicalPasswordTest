@@ -86,13 +86,14 @@ public class Caesar {
 		return plaintext.toString();
 	}
 	
-	public static String decrypt(String plaintext,int key,boolean isIgnoreNotLetter) {
-		return decrypt(plaintext,key,isIgnoreNotLetter,true);
+	public static String decrypt(String ciphertext,int key,boolean isIgnoreNotLetter) {
+		return decrypt(ciphertext,key,isIgnoreNotLetter,true);
 	}
 	
-	public static String decrypt(String plaintext,int key) {
-		return decrypt(plaintext,key,true,true);
+	public static String decrypt(String ciphertext,int key) {
+		return decrypt(ciphertext,key,true,true);
 	}
+	
 	
 	/**
 	 * 概率破解
@@ -101,24 +102,28 @@ public class Caesar {
 	 */
 	public static CaesarMessage autoCrack(String ciphertext,boolean isIgnoreNotLetter,boolean isIgnoreCase) {
 		int targetKey = 0;		// 可能的密钥
-		float probability = 0;	// 吻合度
-		double targetMinus = 1; 
+		float similarity = 0;	// 相似度
 		double[] letterFrequency = getLetterFrequency(ciphertext);
 		if(letterFrequency == null) {
 			return null;
 		}
 		for(int key = 0; key< LETTER_LENGTH;key++) {
-			double sum = 0;
+			double sumpq = 0;
+			double sumqq = 0;
 			for(int j=0;j< LETTER_LENGTH;j++) {
-				sum += (letterFrequency[(j+key)%26]*STANDARD_FREQUENCY[j]);
+				sumpq += (letterFrequency[(j+key)%26]*STANDARD_FREQUENCY[j]);
+				sumqq += Math.pow(letterFrequency[j], 2);
 			}
-			if(Math.abs(sum-TARGET) <= targetMinus) {
-				probability = (float) (sum > TARGET ? TARGET /sum : sum / TARGET) * 100;
-				targetMinus = Math.abs(sum-TARGET);
+			if(sumqq == 0) {
+				return null;
+			}
+			float temp = (float) (sumpq / Math.sqrt(TARGET * sumqq) * 100); // 余弦相似度*100
+			if(temp > similarity) {
+				similarity = temp;
 				targetKey = key;
 			}
 		}
-		return new CaesarMessage(decrypt(ciphertext, targetKey,isIgnoreNotLetter,isIgnoreCase), targetKey, ciphertext,probability);
+		return new CaesarMessage(decrypt(ciphertext, targetKey,isIgnoreNotLetter,isIgnoreCase), targetKey, ciphertext,similarity);
 	}
 	
 	/**

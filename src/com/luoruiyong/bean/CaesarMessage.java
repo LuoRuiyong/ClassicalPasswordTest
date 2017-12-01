@@ -5,7 +5,7 @@ public class CaesarMessage {
 	private String plaintext; 	// 明文
 	private String ciphertext;	// 密文
 	private int key;			// 密钥
-	private float probability;  // 吻合度
+	private float similarity;  	// 余弦相似度
 	
 	public CaesarMessage(String plaintext, int key, String ciphertext) {
 		this.plaintext = plaintext;
@@ -13,11 +13,11 @@ public class CaesarMessage {
 		this.ciphertext = ciphertext;
 	}
 	
-	public CaesarMessage(String plaintext, int key, String ciphertext,float probability) {
+	public CaesarMessage(String plaintext, int key, String ciphertext,float similarity) {
 		this.plaintext = plaintext;
 		this.key = key;
 		this.ciphertext = ciphertext;
-		this.probability = probability;
+		this.similarity = similarity;
 	}
 	
 	public String getPlaintext() {
@@ -39,12 +39,12 @@ public class CaesarMessage {
 		this.key = key;
 	}
 
-	public float getProbability() {
-		return probability;
+	public float getSimilarity() {
+		return similarity;
 	}
 
-	public void setProbability(float probability) {
-		this.probability = probability;
+	public void setSimilarity(float probability) {
+		this.similarity = probability;
 	}
 	
 	
