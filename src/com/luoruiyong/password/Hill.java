@@ -18,11 +18,12 @@ public class Hill {
 	 * @return 密文
 	 */
 	public static String encrypt(String plaintext,int[][] matrixData) {
+		
 		if(MatrixUtil.getDimensionality(matrixData) == 0) {
 			// 矩阵密钥无效
 			return null;
 		}
-		return praser(plaintext, matrixData);
+		return praser(getDividePlaintext(plaintext), matrixData);
 	}
 	
 	/**
@@ -51,15 +52,6 @@ public class Hill {
 	 */
 	private static String praser(String text,int[][] matrixData) {
 		text = CharacterUtil.filterNotLetter(text).toUpperCase();
-		if(text == null || text.length() == 0) {
-			return null;
-		}else if(text.length() % 3 == 1) {
-			// 最后一个分组只有1个字母，填充字符'XX'
-			text = text+"XX";
-		}else if(text.length() % 3 == 2) {
-			// 最后一个分组只有1个字母，填充字符'x'
-			text = text+"X";
-		}
 		StringBuilder textBuilder = new StringBuilder();
 		for(int index = 0;index< text.length() ;index+=3) {
 			int temp1 = text.charAt(index) - 'A';
@@ -71,9 +63,28 @@ public class Hill {
 				for(int j=0;j<3;j++) {
 					sum += temp[j] * matrixData[i][j];
 				}
-				textBuilder.append((char)(sum%26+'a'));
+				textBuilder.append((char)(sum%26+'A'));
 			}
 		}
 		return textBuilder.toString();
+	}
+	
+	/**
+	 * 分组处理
+	 * @param plaintext
+	 * @return
+	 */
+	public static String getDividePlaintext(String plaintext) {
+		if(plaintext == null || plaintext.length() == 0) {
+			return null;
+		}else if(plaintext.length() % 3 == 1) {
+			// 最后一个分组只有1个字母，填充字符'XX'
+			plaintext = plaintext+"XX";
+		}else if(plaintext.length() % 3 == 2) {
+			// 最后一个分组只有1个字母，填充字符'x'
+			plaintext = plaintext+"X";
+		}
+		return plaintext;
+		
 	}
 }

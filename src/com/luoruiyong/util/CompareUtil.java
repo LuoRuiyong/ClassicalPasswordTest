@@ -12,6 +12,11 @@ public class CompareUtil {
 	 * @return 返回加解密详情
 	 */
 	public static ArrayList<Message> getDetailMessage(String plaintext,String ciphertext,int groupCount){
+		plaintext = CharacterUtil.filterNotLetter(plaintext);
+		ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		if(plaintext == null || ciphertext == null) {
+			return null;
+		}
 		ArrayList<Message> messages = new ArrayList<>();
 		int length = Math.min(plaintext.length(), ciphertext.length());
 		if(length % groupCount != 0) {

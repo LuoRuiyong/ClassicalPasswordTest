@@ -26,8 +26,24 @@ public class Playfair {
 	 * @return 密文
 	 */
 	public static String encrypt(String plaintext,String key) {
-		return praser(plaintext, key, TYPE_ENCRYPT);
+		plaintext = CharacterUtil.filterNotLetter(plaintext);
+		key = CharacterUtil.filterNotLetter(key);
+		if(plaintext == null || key == null) {
+			return null;
+		}
+		plaintext = plaintext.toUpperCase();
+		return encrypt(plaintext, getKeyMatrix(key));
 	}
+	
+	public static String encrypt(String plaintext,char[][] keyMatrix) {
+		plaintext = CharacterUtil.filterNotLetter(plaintext);
+		if(plaintext == null || keyMatrix == null) {
+			return null;
+		}
+		plaintext = plaintext.toUpperCase();
+		return praser(plaintext, keyMatrix, TYPE_ENCRYPT);
+	}
+	
 	/**
 	 * 解密算法
 	 * @param ciphertext 密文
@@ -35,7 +51,22 @@ public class Playfair {
 	 * @return 明文
 	 */
 	public static String decrypt(String ciphertext,String key) {
-		return praser(ciphertext, key, TYPE_DECRYPT);
+		ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		key = CharacterUtil.filterNotLetter(key);
+		if(ciphertext == null || key == null) {
+			return null;
+		}
+		ciphertext = ciphertext.toUpperCase();
+		return decrypt(ciphertext, getKeyMatrix(key));
+	}
+	
+	public static String decrypt(String ciphertext,char[][] keyMatrix) {
+		ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		if(ciphertext == null || keyMatrix == null) {
+			return null;
+		}
+		ciphertext = ciphertext.toUpperCase();
+		return praser(ciphertext, keyMatrix, TYPE_DECRYPT);
 	}
 	
 	/**
@@ -45,15 +76,9 @@ public class Playfair {
 	 * @param praserType 解析类型（加密/解密）
 	 * @return 明文或密文
 	 */
-	private static String praser(String text,String key,int praserType) {
-		text = CharacterUtil.filterNotLetter(text).toUpperCase();
-		key = CharacterUtil.filterNotLetter(key).toUpperCase();
-		if(text == null || text.equals("") || key == null || key.equals("")) {
-			return null;
-		}
-		char[][] keyMetrix = getKeyMatrix(key);
+	private static String praser(String text,char[][] keyMatrix,int praserType) {
 		if(praserType == TYPE_ENCRYPT) {
-			text = devidePlaintext(text);
+			text = getDevidePlaintext(text);
 		}
 		StringBuilder textBuilder = new StringBuilder();
 		for(int index = 0;index < text.length();index+=2) {
@@ -65,11 +90,11 @@ public class Playfair {
 			boolean flag1 = false,flag2 = false;
 			for(int i = 0; i < M;i++) {
 				for(int j = 0;j < M; j++) {
-					if(keyMetrix[i][j] == firstCharacter) {
+					if(keyMatrix[i][j] == firstCharacter) {
 						m1 = i;
 						n1 = j;
 						flag1 = true;
-					}else if(keyMetrix[i][j] == secondCharacter) {
+					}else if(keyMatrix[i][j] == secondCharacter) {
 						m2 = i;
 						n2 = j;
 						flag2 = true;
@@ -87,31 +112,31 @@ public class Playfair {
 				case TYPE_ENCRYPT:
 					if(m1 == m2) {
 						// 同一行，循环右移一位
-						firstCharacter = keyMetrix[m1][(n1 + 1)%M];
-						secondCharacter = keyMetrix[m2][(n2 + 1)%M];
+						firstCharacter = keyMatrix[m1][(n1+1)%M];
+						secondCharacter = keyMatrix[m2][(n2+1)%M];
 					}else if(n1 == n2) {
 						// 同一列，循环下移一位
-						firstCharacter = keyMetrix[(m1+1)%M][n1];
-						secondCharacter = keyMetrix[(m2+1)%M][n2];
+						firstCharacter = keyMatrix[(m1+1)%M][n1];
+						secondCharacter = keyMatrix[(m2+1)%M][n2];
 					}else {
 						// 不同行不同列
-						firstCharacter =  keyMetrix[m1][n2];
-						secondCharacter = keyMetrix[m2][n1];
+						firstCharacter =  keyMatrix[m1][n2];
+						secondCharacter = keyMatrix[m2][n1];
 					}
 					break;
 				default:
 					if(m1 == m2) {
 						// 同一行，循环左移一位
-						firstCharacter = keyMetrix[m1][(n1-1+M)%M];
-						secondCharacter = keyMetrix[m2][(n2-1+M)%M];
+						firstCharacter = keyMatrix[m1][(n1-1+M)%M];
+						secondCharacter = keyMatrix[m2][(n2-1+M)%M];
 					}else if(n1 == n2) {
 						// 同一列，循环上移一位
-						firstCharacter = keyMetrix[(m1-1+M)%M][n1];
-						secondCharacter = keyMetrix[(m2-1+M)%M][n2];
+						firstCharacter = keyMatrix[(m1-1+M)%M][n1];
+						secondCharacter = keyMatrix[(m2-1+M)%M][n2];
 					}else {
 						// 不同行不同列
-						firstCharacter =  keyMetrix[m1][n2];
-						secondCharacter = keyMetrix[m2][n1];
+						firstCharacter =  keyMatrix[m1][n2];
+						secondCharacter = keyMatrix[m2][n1];
 					}
 					break;
 			}
@@ -133,6 +158,8 @@ public class Playfair {
 		if(key == null) {
 			return null;
 		}
+		// 大写字母
+		key = key.toUpperCase();
 		// 去除重复的字母
 		key = CharacterUtil.removeRepeatedLetter(key+"ABCDEFGHIJKLMNOPQRSTUVWXYZ",true);
 		// 去除默认忽略的字符
@@ -155,7 +182,7 @@ public class Playfair {
 	 * @param plaintext 明文
 	 * @return 分组处理后的明文
 	 */
-	public static String devidePlaintext(String plaintext) {
+	public static String getDevidePlaintext(String plaintext) {
 		char firstCharacter = '0';
 		char secondCharacter = '0';
 		StringBuilder plaintextBuilder = new StringBuilder();

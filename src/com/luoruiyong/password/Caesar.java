@@ -12,7 +12,7 @@ import com.luoruiyong.bean.CaesarMessage;
 public class Caesar {
 	private final static int LETTER_LENGTH = 26; 
 	private final static double TARGET =  0.065379;
-	private final static double STANDARD_FREQUENCY[] = {0.082, 0.015, 0.028, 0.042, 0.127,
+	public final static double STANDARD_FREQUENCY[] = {0.082, 0.015, 0.028, 0.042, 0.127,
 	                      					   			0.022, 0.020, 0.061, 0.070, 0.001,
 	                      					   			0.008, 0.040, 0.024, 0.067, 0.075,
 	                      					   			0.019, 0.001, 0.060, 0.063, 0.090,
@@ -131,9 +131,9 @@ public class Caesar {
 	 * @param ciphertext 密文
 	 * @return 字母出现频率集
 	 */
-	private static double[] getLetterFrequency(String ciphertext) {
+	public static double[] getLetterFrequency(String ciphertext) {
 		int sum = 0;
-		double[] letterFrequency = new double[26];
+		double[] letterFrequency = new double[LETTER_LENGTH];
 		int length = ciphertext.length();
 		for(int i = 0;i < length; i++) {
 			char ch = Character.toLowerCase(ciphertext.charAt(i));
