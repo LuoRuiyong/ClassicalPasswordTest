@@ -1,9 +1,6 @@
 package com.luoruiyong.password;
 
-import org.omg.CORBA.PRIVATE_MEMBER;
-import org.w3c.dom.css.ElementCSSInlineStyle;
-
-import com.luoruiyong.bean.PlayfairMessage;
+import com.luoruiyong.util.CharacterUtil;
 
 /**
  * Playfair密码算法类
@@ -49,14 +46,16 @@ public class Playfair {
 	 * @return 明文或密文
 	 */
 	private static String praser(String text,String key,int praserType) {
-		if(text == null || text.equals("")) {
+		text = CharacterUtil.filterNotLetter(text).toUpperCase();
+		key = CharacterUtil.filterNotLetter(key).toUpperCase();
+		if(text == null || text.equals("") || key == null || key.equals("")) {
 			return null;
 		}
+		char[][] keyMetrix = getKeyMatrix(key);
 		if(praserType == TYPE_ENCRYPT) {
 			text = devidePlaintext(text);
 		}
 		StringBuilder textBuilder = new StringBuilder();
-		char[][] keyMetrix = initKeyMatrix(key);
 		for(int index = 0;index < text.length();index+=2) {
 			char firstCharacter = text.charAt(index);
 			char secondCharacter = text.charAt(index + 1);
@@ -127,34 +126,24 @@ public class Playfair {
 	 * @param key 字符串密钥
 	 * @return 密钥矩阵
 	 */
-	public static char[][] initKeyMatrix(String key) {
+	public static char[][] getKeyMatrix(String key) {
 		char[][] keyMatrix = new char[M][M];
-		int keySum = 0;
-		key = key.toUpperCase();
-		if(key.contains("I") || key.contains("J")){
-			key += "ABCDEFGHKLMNOPQRSTUVWXYZ";
-		}else{
-			key += "ABCDEFGHIKLMNOPQRSTUVWXYZ"; // 忽略J
+		// 过滤密钥中的非字母字符
+		key = CharacterUtil.filterNotLetter(key);
+		if(key == null) {
+			return null;
 		}
-		StringBuilder keyBuilder = new StringBuilder();
-		for(int i = 0;i < key.length() ;i++) {
-			char ch = key.charAt(i);
-			if(ch >= 'A' && ch <= 'Z') {
-				int j = 0;
-				for(;j < keyBuilder.length();j++) {
-					// 检查字母是否重复出现
-					if(ch == keyBuilder.charAt(j) || (ch == 'I' && keyBuilder.charAt(j) == 'J') || (ch == 'J' && keyBuilder.charAt(j) == 'I')) {
-						break;
-					}
-				}
-				if(j >= keyBuilder.length()) {
-					keyBuilder.append(ch);
-					keyMatrix[keySum/M][keySum%M] = ch;
-					if(ch == DOUBLE_MEAN_LETTER || ch == DEFAULT_IGNORE_LETTER) {
-						doubleMeanLetterRow = keySum / M;
-						doubleMeanLetterColumn = keySum % M;
-					}
-					keySum++;
+		// 去除重复的字母
+		key = CharacterUtil.removeRepeatedLetter(key+"ABCDEFGHIJKLMNOPQRSTUVWXYZ",true);
+		// 去除默认忽略的字符
+		key = CharacterUtil.removeLetter(key, DEFAULT_IGNORE_LETTER,true);
+		for(int i = 0;i<M;i++) {
+			for(int j = 0;j<M;j++) {
+				char ch = key.charAt(i*M+j);
+				keyMatrix[i][j] = ch;
+				if(ch == DOUBLE_MEAN_LETTER) {
+					doubleMeanLetterRow = i;
+					doubleMeanLetterColumn = j;
 				}
 			}
 		}
@@ -171,19 +160,17 @@ public class Playfair {
 		char secondCharacter = '0';
 		StringBuilder plaintextBuilder = new StringBuilder();
 		for(int i = 0 ;i < plaintext.length();i++) {
-			char ch = Character.toUpperCase(plaintext.charAt(i));
-			if(ch >= 'A' && ch <= 'Z') {
-				plaintextBuilder.append(ch);
-				if(plaintextBuilder.length() % 2 == 1) {
-					firstCharacter = ch;
-				}else {
-					secondCharacter = ch;
-					// 分组中字母重复，填充指定字符
-					if(firstCharacter == secondCharacter) {
-						plaintextBuilder.insert(plaintextBuilder.length()-1,fillCharacter(firstCharacter));
-					}
+			char ch = plaintext.charAt(i);
+			plaintextBuilder.append(ch);
+			if(plaintextBuilder.length() % 2 == 1) {
+				firstCharacter = ch;
+			}else {
+				secondCharacter = ch;
+				// 分组中字母重复，填充指定字符
+				if(firstCharacter == secondCharacter) {
+					plaintextBuilder.insert(plaintextBuilder.length()-1,fillCharacter(firstCharacter));
 				}
-			}
+			}	
 		}
 		if(plaintextBuilder.length() % 2 == 1) {
 			// 最后一个分组只有一个字母，填充指定字符
