@@ -214,4 +214,13 @@ public class Playfair {
 	private static char fillCharacter(char ch) {
 		return ch != DEFAULT_FILL_CHARACTER ? DEFAULT_FILL_CHARACTER : SPARE_FILL_CHARACTER;
 	}
+	
+	/**
+	 * ≤‚ ‘√‹¬Î «∑Ò”––ß
+	 * @param testKey
+	 * @return
+	 */
+	public static char[][] isKeyAvailable(String testKey) {
+		return getKeyMatrix(testKey);
+	}
 }

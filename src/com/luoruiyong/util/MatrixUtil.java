@@ -9,6 +9,9 @@ private final static int M = 3;  // 3½×¾ØÕó
 	 * @return Äæ¾ØÕóÊı×é
 	 */
 	public static int[][] getForceInverseMatrix(int[][] matrixData){
+		if(matrixData == null) {
+			return null;
+		}
 		int[][] newMatrixData = new int[M][M];
 		int[] tempMatrix = {1,0,0};
 		boolean flag = false;

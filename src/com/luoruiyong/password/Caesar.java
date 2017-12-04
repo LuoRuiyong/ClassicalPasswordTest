@@ -3,6 +3,7 @@ package com.luoruiyong.password;
 import java.util.ArrayList;
 
 import com.luoruiyong.bean.CaesarMessage;
+import com.luoruiyong.util.CharacterUtil;
 
 /**
  * Caesar密码算法类
@@ -23,33 +24,34 @@ public class Caesar {
 	 * 加密算法
 	 * @param plaintext  明文
 	 * @param key	密钥
+	 * isReserveNotLetter 是否保留非字母字符
 	 * @param isIgnoreCase  是否忽略大小写
 	 * @return	密文
 	 */
-	public static String encrypt(String plaintext,int key,boolean isIgnoreNotLetter,boolean isIgnoreCase) {
+	public static String encrypt(String plaintext,int key,boolean isReserveNotLetter,boolean isIgnoreCase) {
+		if(!isReserveNotLetter) {
+			plaintext = CharacterUtil.filterNotLetter(plaintext);
+		}
 		if(plaintext == null || plaintext.equals("")) {
 			return null;
 		}
 		StringBuilder ciphertext = new StringBuilder();
-		int length = plaintext.length();
-		for(int i=0;i < length; i++) {
+		for(int i=0;i < plaintext.length(); i++) {
 			char ch = plaintext.charAt(i);
-			if(isIgnoreCase && ch >= 'A' &&  ch <= 'Z') {
-				ch = (char) ((Character.toLowerCase(ch) - 'a' + key) % LETTER_LENGTH + 'a');
+			if(isIgnoreCase && ch >= 'a' &&  ch <= 'z') {
+				ch = (char) ((Character.toUpperCase(ch) - 'A' + key) % LETTER_LENGTH + 'A');
 			}else if(ch >= 'A' &&  ch <= 'Z') {
 				ch = (char) ((ch - 'A' + key) % LETTER_LENGTH + 'A');
 			}else if(ch >= 'a' &&  ch <= 'z') {
 				ch = (char) ((ch - 'a' + key) % LETTER_LENGTH + 'a');
-			}else if(isIgnoreNotLetter) {
-				continue;
 			}
 			ciphertext.append(ch);
 		}
 		return ciphertext.toString();
 	}
 	
-	public static String encrypt(String plaintext,int key,boolean isIgnoreNotLetter) {
-		return encrypt(plaintext,key,isIgnoreNotLetter,true);
+	public static String encrypt(String plaintext,int key,boolean isReserveNotLetter) {
+		return encrypt(plaintext,key,isReserveNotLetter,true);
 	}
 	
 	public static String encrypt(String plaintext,int key) {
@@ -60,11 +62,14 @@ public class Caesar {
 	 * 解密算法
 	 * @param ciphertext 密文
 	 * @param key 密钥
-	 * @param isIgnoreNotLetter 是否忽略非字母字符
+	 * @param isReserveNotLetter 是否保留非字母字符
 	 * @param isIgnoreCase 是否忽略字母大小写
 	 * @return 明文
 	 */
-	public static String decrypt(String ciphertext,int key,boolean isIgnoreNotLetter,boolean isIgnoreCase) {
+	public static String decrypt(String ciphertext,int key,boolean isReserveNotLetter,boolean isIgnoreCase) {
+		if(!isReserveNotLetter) {
+			ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		}
 		if(ciphertext == null || ciphertext.equals("")) {
 			return null;
 		}
@@ -72,22 +77,20 @@ public class Caesar {
 		int length = ciphertext.length();
 		for(int i=0;i < length; i++) {
 			char ch = ciphertext.charAt(i);
-			if(isIgnoreCase && ch >= 'A' &&  ch <= 'Z') {
-				ch = (char) ((Character.toLowerCase(ch) - 'a' - key + LETTER_LENGTH) % LETTER_LENGTH + 'a');
+			if(isIgnoreCase && ch >= 'a' &&  ch <= 'z') {
+				ch = (char) ((Character.toUpperCase(ch) - 'A' - key + LETTER_LENGTH) % LETTER_LENGTH + 'A');
 			}else if(ch >= 'A' &&  ch <= 'Z') {
 				ch = (char) ((ch - 'A' - key + LETTER_LENGTH) % LETTER_LENGTH + 'A');
 			}else if(ch >= 'a' &&  ch <= 'z') {
 				ch = (char) ((ch - 'a' - key + LETTER_LENGTH) % LETTER_LENGTH + 'a');
-			}else if(isIgnoreNotLetter) {
-				continue;
 			}
 			plaintext.append(ch);
 		}
 		return plaintext.toString();
 	}
 	
-	public static String decrypt(String ciphertext,int key,boolean isIgnoreNotLetter) {
-		return decrypt(ciphertext,key,isIgnoreNotLetter,true);
+	public static String decrypt(String ciphertext,int key,boolean isReserveNotLetter) {
+		return decrypt(ciphertext,key,isReserveNotLetter,true);
 	}
 	
 	public static String decrypt(String ciphertext,int key) {
@@ -100,7 +103,7 @@ public class Caesar {
 	 * @param ciphertxt 密文
 	 * @return 破解结果
 	 */
-	public static CaesarMessage autoCrack(String ciphertext,boolean isIgnoreNotLetter,boolean isIgnoreCase) {
+	public static CaesarMessage autoCrack(String ciphertext,boolean isReserveNotLetter,boolean isIgnoreCase) {
 		int targetKey = 0;		// 可能的密钥
 		float similarity = 0;	// 相似度
 		double[] letterFrequency = getLetterFrequency(ciphertext);
@@ -123,7 +126,7 @@ public class Caesar {
 				targetKey = key;
 			}
 		}
-		return new CaesarMessage(decrypt(ciphertext, targetKey,isIgnoreNotLetter,isIgnoreCase), targetKey, ciphertext,similarity);
+		return new CaesarMessage(decrypt(ciphertext, targetKey,isReserveNotLetter,isIgnoreCase), targetKey, ciphertext,similarity);
 	}
 	
 	/**
@@ -134,11 +137,11 @@ public class Caesar {
 	public static double[] getLetterFrequency(String ciphertext) {
 		int sum = 0;
 		double[] letterFrequency = new double[LETTER_LENGTH];
-		int length = ciphertext.length();
-		for(int i = 0;i < length; i++) {
-			char ch = Character.toLowerCase(ciphertext.charAt(i));
-			if(ch >= 'a' &&  ch <= 'z') {
-				letterFrequency[ch -'a']++;
+		ciphertext = ciphertext.toUpperCase();
+		for(int i = 0;i < ciphertext.length(); i++) {
+			char ch = ciphertext.charAt(i);
+			if(ch >= 'A' &&  ch <= 'Z') {
+				letterFrequency[ch -'A']++;
 				sum++;
 			}
 		}
@@ -154,27 +157,37 @@ public class Caesar {
 	/**
 	 * 穷举法破解
 	 * @param ciphertext 密文
-	 * @param isIgnoreNotLetter 是否忽略非字母字符
+	 * @param isReserveNotLetter 是否保留非字母字符
 	 * @param isIgnoreCase 是否忽略字母大小写
 	 * @return 可能的明文结果集
 	 */
-	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isIgnoreNotLetter,boolean isIgnoreCase){
-		if(null == ciphertext || ciphertext.equals("")) {
-			return null;
-		}
+	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isReserveNotLetter,boolean isIgnoreCase){
 		ArrayList<CaesarMessage> messages = new ArrayList<>();
 		for(int key=0;key<LETTER_LENGTH;key++) {
-			String plaintext = decrypt(ciphertext, key,isIgnoreNotLetter,isIgnoreCase);
+			String plaintext = decrypt(ciphertext, key,isReserveNotLetter,isIgnoreCase);
 			messages.add(new CaesarMessage(plaintext, key, ciphertext));
 		}
 		return messages;
 	}
 	
-	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isIgnoreNotLetter){
-		return exhaustCrack(ciphertext, isIgnoreNotLetter,true);
+	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isReserveNotLetter){
+		return exhaustCrack(ciphertext, isReserveNotLetter,true);
 	}
 	
 	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext){
 		return exhaustCrack(ciphertext, true,true);
+	}
+	
+	public static boolean isKeyAvailable(String testKey) {
+		int key;
+		try {
+			key = Integer.parseInt(testKey);
+		}catch (Exception e) {
+			return false;
+		}
+		if(key >= 0 && key < 26) {
+			return true;
+		}
+		return false;
 	}
 }

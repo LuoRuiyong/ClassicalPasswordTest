@@ -11,6 +11,7 @@ import com.luoruiyong.util.MatrixUtil;
 
 public class Hill {
 	
+	private static final int M = 3;
 	/**
 	 * 加密算法
 	 * @param plaintext 明文
@@ -38,8 +39,13 @@ public class Hill {
 			return null;
 		}
 		int[][] inverseMatrixData = MatrixUtil.getForceInverseMatrix(matrixData);
-		if(inverseMatrixData == null) {
+		ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		if(inverseMatrixData == null || ciphertext == null || ciphertext.length() < M) {
 			return null;
+		}else {
+			if(ciphertext.length() % M != 0) {
+				ciphertext = ciphertext.substring(0, ciphertext.length() - ciphertext.length() % 3).toUpperCase();
+			}
 		}
 		return praser(ciphertext, inverseMatrixData);
 	}
@@ -75,6 +81,7 @@ public class Hill {
 	 * @return
 	 */
 	public static String getDividePlaintext(String plaintext) {
+		plaintext = CharacterUtil.filterNotLetter(plaintext);
 		if(plaintext == null || plaintext.length() == 0) {
 			return null;
 		}else if(plaintext.length() % 3 == 1) {
@@ -84,7 +91,59 @@ public class Hill {
 			// 最后一个分组只有1个字母，填充字符'x'
 			plaintext = plaintext+"X";
 		}
-		return plaintext;
-		
+		return plaintext.toUpperCase();
+	}
+	
+	/**
+	 * 检验密约是否有效
+	 * @param testKey
+	 * @return
+	 */
+	public static int[][] isKeyAvailable(String testKey) {
+		String key = CharacterUtil.filterNotLetter(testKey);
+		if(key != null) {
+			if(key.length() < M*M) {
+				return null;
+			}else {
+				int[][] matrixData = MatrixUtil.stringToIntMatrix(key);
+				if(MatrixUtil.getForceInverseMatrix(matrixData) != null) {
+					return matrixData;
+				}else {
+					return null;
+				}
+			}
+		}else {
+			int[][] matrixData = intStringToIntMatrix(testKey);
+			if (matrixData == null) {
+				return null;
+			}else if(MatrixUtil.getForceInverseMatrix(matrixData) != null){
+				return matrixData;
+			}
+			return null;
+		}
+	}
+	
+	private static int[][] intStringToIntMatrix(String testKey){
+		String[] arrstr = testKey.split(" ");
+		if(arrstr == null || arrstr.length < M*M) {
+			return null;
+		}
+		int[][] matrixData = new int[M][M];
+		int count = 0;
+		for(int i = 0;i<arrstr.length && count < M*M;i++) {
+			try {
+				int temp = Integer.parseInt(arrstr[i]);
+				if(temp < 26 && temp >= 0) {
+					matrixData[i/M][i%M] = temp;
+					count+=1;
+				}
+			}catch (Exception e) {
+				return null;
+			}
+		}
+		if(count == M*M) {
+			return matrixData;
+		}
+		return null;
 	}
 }

@@ -18,6 +18,9 @@ public class CharacterUtil {
 				textBuilder.append(ch);
 			}
 		}
+		if(textBuilder.length() == 0) {
+			return null;
+		}
 		return textBuilder.toString();
 	}
 	
