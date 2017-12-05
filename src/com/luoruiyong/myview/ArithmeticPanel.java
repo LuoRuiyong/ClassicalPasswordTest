@@ -14,17 +14,19 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 
+import com.luoruiyong.OnMessageChangedListener;
+import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.ArithmeticType;
+import com.luoruiyong.ui.MainFrame;
+import com.luoruiyong.util.DocumentUtil;
+
 public class ArithmeticPanel extends JPanel {
-	
-	public static final int CAESAR = 1;
-	public static final int PLAYFAIR = 2;
-	public static final int HILL = 3;
-	
+
 	private JRadioButton caesarButton;
 	private JRadioButton playfairButton;
 	private JRadioButton hillButton;
 	private ButtonGroup buttonGroup;
-	private OnArithmeticChangedListener listener;
+	private OnMessageChangedListener listener;
 	
 	public ArithmeticPanel() {
 		caesarButton = new JRadioButton("Caeser",true);
@@ -48,16 +50,19 @@ public class ArithmeticPanel extends JPanel {
 		ActionListener actionListener = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				DocumentUtil.saveMessage(MainFrame.getMessage());
 				if(listener == null) {
 					return;
 				}
+				Message message = null;
 				if(e.getSource().equals(caesarButton)) {
-					listener.onArithmeticChangedListener(CAESAR);
+					 message = DocumentUtil.getMessage(ArithmeticType.CAESAR);
 				}else if(e.getSource().equals(playfairButton)) {
-					listener.onArithmeticChangedListener(PLAYFAIR);
+					 message = DocumentUtil.getMessage(ArithmeticType.PLAYFAIR);
 				}else if(e.getSource().equals(hillButton)) {
-					listener.onArithmeticChangedListener(HILL);
+					 message = DocumentUtil.getMessage(ArithmeticType.HILL);
 				}
+				listener.onArithmeticTypeChanged(message);
 			}
 		};
 		caesarButton.addActionListener(actionListener);
@@ -65,11 +70,7 @@ public class ArithmeticPanel extends JPanel {
 		hillButton.addActionListener(actionListener);
 	}
 	
-	public void setOnArithmeticChangedListener(OnArithmeticChangedListener listener) {
+	public void setOnMessageChangedListener(OnMessageChangedListener listener) {
 		this.listener = listener;
-	}
-	
-	public interface OnArithmeticChangedListener{
-		void onArithmeticChangedListener(int arithmeticType);
 	}
 }

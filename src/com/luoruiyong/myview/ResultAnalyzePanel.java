@@ -1,12 +1,15 @@
 package com.luoruiyong.myview;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.lang.reflect.Array;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -15,16 +18,24 @@ import org.jfree.chart.StandardChartTheme;
 import org.jfree.data.general.DefaultPieDataset;
 import org.omg.CORBA.PUBLIC_MEMBER;
 
+import com.luoruiyong.constant.ArithmeticType;
+
 public class ResultAnalyzePanel extends JPanel {
 	
+	private JPanel groupAnalyzePanel;
 	private JPanel frequencyAnalyzePanel;
 	private JPanel objectAnaylyzePanel;
-	private JPanel groupAnalyzePanel;
+	private JTextArea taGroupData;
 	
 	public ResultAnalyzePanel() {
 		frequencyAnalyzePanel = new JPanel();
 		objectAnaylyzePanel = new JPanel();
+		
 		groupAnalyzePanel = new JPanel();
+		groupAnalyzePanel.setLayout(new BorderLayout());
+		taGroupData = new JTextArea();
+		taGroupData.setEditable(false);
+		groupAnalyzePanel.add(taGroupData,BorderLayout.CENTER);
 		
 		setLayout(new GridLayout(1, 3));
 		add(groupAnalyzePanel);
@@ -33,27 +44,31 @@ public class ResultAnalyzePanel extends JPanel {
 		
 		frequencyAnalyzePanel.setLayout(new CardLayout());
 		objectAnaylyzePanel.setLayout(new CardLayout());
-		createPicture();
+		//createPicture();
 	}
 	
 	// 设置密码算法对应的界面
-	public void setArithmeticType(int arithmeticType) {
+	public void setArithmeticType(ArithmeticType arithmeticType) {
 		switch (arithmeticType) {
-		case ArithmeticPanel.CAESAR:
+		case CAESAR:
 			// 清除分组分析里面的内容
 			break;
-		case ArithmeticPanel.PLAYFAIR:
+		case PLAYFAIR:
 			frequencyAnalyzePanel.setVisible(false);
 			objectAnaylyzePanel.setVisible(false);
 			// 清除分组分析里面的内容
 			break;
 			
-		case ArithmeticPanel.HILL:
+		case HILL:
 			frequencyAnalyzePanel.setVisible(false);
 			objectAnaylyzePanel.setVisible(false);
 			// 清除分组分析里面的内容
 			break;
 		}
+	}
+	
+	public void setGroupAnalyzeData(String data) {
+		taGroupData.setText(data);
 	}
 	
 	public void createPicture() {
@@ -78,4 +93,5 @@ public class ResultAnalyzePanel extends JPanel {
         objectAnaylyzePanel.add(panel2);
         //objectAnaylyzePanel.add(panel);
 	}
+	
 }

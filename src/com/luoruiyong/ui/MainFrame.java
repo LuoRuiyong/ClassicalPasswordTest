@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
+import java.io.File;
+import java.util.IllegalFormatCodePointException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -15,19 +17,22 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.ArithmeticType;
+import com.luoruiyong.constant.Status;
 import com.luoruiyong.myview.ArithmeticPanel;
-import com.luoruiyong.myview.ArithmeticPanel.OnArithmeticChangedListener;
-import com.luoruiyong.myview.FunctionPanel.OnStatusChangedListener;
 import com.luoruiyong.myview.MenuManager;
 import com.luoruiyong.myview.ProcessPanel;
 import com.luoruiyong.myview.ResultAnalyzePanel;
+import com.luoruiyong.myview.MenuManager.OnClearRecordListener;
 import com.luoruiyong.myview.TipPanel.OnCaesarSettingChangedListener;
-import com.luoruiyong.myview.TipPanel.OnSecretKeyChangedListener;
+import com.luoruiyong.util.DocumentUtil;
+import com.luoruiyong.OnMessageChangedListener;
 
-
-public class MainFrame extends JFrame implements OnArithmeticChangedListener,
-				OnSecretKeyChangedListener,OnCaesarSettingChangedListener,
-				OnStatusChangedListener{
+public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
+				OnMessageChangedListener,OnClearRecordListener{
+	
+	private static Message message = new Message();
 	
 	private MenuManager menuManager;
 	private ArithmeticPanel arithmeticPanel;
@@ -39,12 +44,16 @@ public class MainFrame extends JFrame implements OnArithmeticChangedListener,
 		super();
 		initSetting();
 		loadPanel();
+		initData();
+		initActionListener();
 	}
 	
 	public MainFrame(String title){
 		super(title);
 		initSetting();
 		loadPanel();
+		initData();
+		initActionListener();
 	}
 	
 	public void initSetting() {
@@ -63,7 +72,7 @@ public class MainFrame extends JFrame implements OnArithmeticChangedListener,
 		arithmeticPanel = new ArithmeticPanel();
 		processPanel = new ProcessPanel();
 		resultAnalyzePanel = new ResultAnalyzePanel();
-		statusLabel = new JLabel("就绪");
+		statusLabel = new JLabel();
 		JPanel panel = new JPanel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		panel.add(new JLabel("状态："));
@@ -80,52 +89,144 @@ public class MainFrame extends JFrame implements OnArithmeticChangedListener,
                 setFill(MainFrameConstraints.BOTH).setWeight(1,3));
 		add(panel,new MainFrameConstraints(0,3).  
                 setFill(MainFrameConstraints.BOTH).setWeight(1,0));
-		initActionListener();
+		
 	}
 	
 	public void initActionListener() {
-		arithmeticPanel.setOnArithmeticChangedListener(this);
-		processPanel.getTipPanel().setOnSecretKeyChangedListener(this);
-		processPanel.getTipPanel().setOnCaesarSettingChangedListener(this);
+		arithmeticPanel.setOnMessageChangedListener(this); // 算法改变
+		menuManager.setOnClearRecordListener(this);
+		menuManager.setOnMessageChangedListener(this);
+		processPanel.setOnMessageChangedListener(this);   // 明文密文人为密文改变
+		processPanel.getTipPanel().setOnCaesarSettingChangedListener(this); // 凯撒加解密规则改变
+		processPanel.getTipPanel().setOnMessageChangedListener(this);	// 密钥改变
+		processPanel.getFunctionPanel().setOnMessageChangedListener(this); // 加解密分析等操作
 	}
-
-	// 密码算法改变回调
-	@Override
-	public void onArithmeticChangedListener(int arithmeticType) {
-		processPanel.getTipPanel().setArithmeticType(arithmeticType);
-		processPanel.getFunctionPanel().setArithmeticType(arithmeticType);
-		resultAnalyzePanel.setArithmeticType(arithmeticType);
+	
+	public void initData() {
+		if(!new File(DocumentUtil.FILE_PATH).exists()) {
+			DocumentUtil.createXmlSettingFile();
+		}
+		message = DocumentUtil.getMessage(ArithmeticType.CAESAR);
+		message.setStatus(Status.NO_SECRET_KEY);
+		statusLabel.setText(message.getStatus());
+		processPanel.updateInterface(message);
+		
 	}
-
-	// 凯撒密码设置发生改变回调
+	
+	// 凯撒加解密额外规则设置发生改变回调
 	@Override
 	public void onCaserSettingChanged(boolean isReserveNotLetter, boolean isIgnoreCase) {
 		processPanel.getFunctionPanel().setCaesarSetting(isReserveNotLetter, isIgnoreCase);
 	}
 
-	// 凯撒密码发生改变回调
+
+	// 密钥状态发生改变回调，由提示面板触发
 	@Override
-	public void onCaesarSecretKeyChanged(int key) {
-		processPanel.getFunctionPanel().setCaesarSecretKey(key);
+	public void onSecretKeyChanged(Message msg) {
+		// NO_SECRET_KEY、SECRET_KEY_INVALID、SECRET_KEY_AVAILABLE
+		statusLabel.setText(msg.getStatus());
+		message.setStatus(msg.getStatus());
+		message.setKey(msg.getKey());
+		processPanel.getFunctionPanel().updateInterface(message);
+	}
+
+	// 密码算法发生改变时回调
+	@Override
+	public void onArithmeticTypeChanged(Message msg) {
+		message = msg;
+		processPanel.updateInterface(message);
 	}
 	
-	// playfair密码发生改变回调
 	@Override
-	public void onPlayfairSecretKeyChanged(char[][] keyMatrix) {
-		processPanel.getFunctionPanel().setPlayfairSecretKey(keyMatrix);
-	}
-
-	// hill密码发生改变回调
-	@Override
-	public void onHillSecretKeyChanged(int[][] matrixData) {
-		processPanel.getFunctionPanel().setHillSecretKey(matrixData);
-	}
-
-	// 系统状态发生改变回调
-	@Override
-	public void onStatusChanged() {
+	public void onOnlyStatusChanged(String status) {
+		// ENCRYPT_FAILED、DECRYPT_FAILED、ENCRYPT_ANALYSIS、
+		// DECRYPT_ANALYSIS、CRACK_ANALYSIS、NO_ANAYLYSIS
+		message.setStatus(status);
+		statusLabel.setText(status);
+		if(status.equals(Status.ENCRYPT_FAILED) 
+				|| status.equals(Status.DECRYPT_FAILED)
+						|| status.equals(Status.CRACK_FAILED)) {
+			processPanel.getFunctionPanel().setAnaylzable(false);
+		}else if(status.equals(Status.ENCRYPT_ANALYSIS)){
+			
+		}else if(status.equals(Status.DECRYPT_ANALYSIS)){
+			
+		}else if(status.equals(Status.EXHAUST_CRACK_ANAYLYZE)){
+			
+		}else if(status.equals(Status.PROBABILITY_CRACK_ANALYZE)){
+			
+		}
+		System.out.println(message.getStatus());
 		
+			
 	}
 	
+	// 明文内容发生改变回调，由明文输入框或解密重置明文输入框内容触发
+	@Override
+	public void onPlaintextChanged(Message msg) {
+		// DECRYPT_SUCCEED、NO_SECRET_KEY、EXHAUST_CRACK、PROBABILITY_CRACK
+		if(msg.getStatus().equals(Status.DECRYPT_SUCCEED) 
+				|| msg.getStatus().equals(Status.EXHAUST_CRACK)
+					|| msg.getStatus().equals(Status.PROBABILITY_CRACK)
+						|| msg.getStatus().equals(Status.OPEN_FILE_SUCCEED)){
+			// 解密成功
+			statusLabel.setText(msg.getStatus());
+			processPanel.showPlaintext(msg.getPlaintext());
+			if(msg.getStatus().equals(Status.OPEN_FILE_SUCCEED)) {
+				processPanel.getFunctionPanel().setAnaylzable(false);
+			}
+		}else if(msg.getStatus().equals(Status.NO_ANAYLYSIS)) {
+			processPanel.getFunctionPanel().setAnaylzable(false);
+		}
+		message.setStatus(msg.getStatus());
+		message.setPlaintext(msg.getPlaintext());
+	}
+
+	// 密文内容发生人为改变回调，由密文输入框或解密重置明文输入框内容触发
+	@Override
+	public void onCiphertextChanged(Message msg) {
+		
+		if(msg.getStatus().equals(Status.ENCRYPT_SUCCEED)
+				|| msg.getStatus().equals(Status.OPEN_FILE_SUCCEED)){
+			// 加密成功
+			statusLabel.setText(msg.getStatus());
+			processPanel.showCiphertext(msg.getCiphertext());
+			if(msg.getStatus().equals(Status.OPEN_FILE_SUCCEED)) {
+				processPanel.getFunctionPanel().setAnaylzable(false);
+			}
+		}else if(msg.getStatus().equals(Status.NO_ANAYLYSIS)) {
+			processPanel.getFunctionPanel().setAnaylzable(false);
+		}
+		message.setStatus(msg.getStatus());
+		message.setCiphertext(msg.getCiphertext());
+	}
 	
+	public static Message getMessage() {
+		return message;
+	}
+
+	@Override
+	public void onClearPlaintextArea() {
+		message.setPlaintext("");
+		statusLabel.setText(Status.CLEAR_PLAINTEXT_SUCCEED);
+		message.setStatus(Status.CLEAR_PLAINTEXT_SUCCEED);
+		processPanel.showPlaintext(message.getPlaintext());
+	}
+
+	@Override
+	public void onClearCiphertextArea() {
+		message.setCiphertext("");
+		statusLabel.setText(Status.CLEAR_CIPHERTEXT_SUCCEED);
+		message.setStatus(Status.CLEAR_CIPHERTEXT_SUCCEED);
+		processPanel.showCiphertext(message.getCiphertext());
+	}
+
+	@Override
+	public void onClearAll() {
+		message.setPlaintext("");
+		message.setCiphertext("");
+		message.setKey("");
+		message.setStatus(Status.NO_SECRET_KEY);
+		processPanel.updateInterface(message);
+	}
 }

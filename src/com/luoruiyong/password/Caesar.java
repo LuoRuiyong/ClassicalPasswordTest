@@ -162,6 +162,12 @@ public class Caesar {
 	 * @return 可能的明文结果集
 	 */
 	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isReserveNotLetter,boolean isIgnoreCase){
+		if(!isReserveNotLetter) {
+			ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		}
+		if(ciphertext == null || ciphertext.length() == 0) {
+			return null;
+		}
 		ArrayList<CaesarMessage> messages = new ArrayList<>();
 		for(int key=0;key<LETTER_LENGTH;key++) {
 			String plaintext = decrypt(ciphertext, key,isReserveNotLetter,isIgnoreCase);

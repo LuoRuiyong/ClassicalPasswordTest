@@ -3,16 +3,26 @@ package com.luoruiyong.myview;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Array;
 import java.sql.ClientInfoStatus;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import org.omg.CORBA.PUBLIC_MEMBER;
+
+import com.luoruiyong.OnMessageChangedListener;
+import com.luoruiyong.bean.CaesarMessage;
+import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.ArithmeticType;
 import com.luoruiyong.constant.Status;
 import com.luoruiyong.password.Caesar;
 import com.luoruiyong.password.Hill;
 import com.luoruiyong.password.Playfair;
+import com.luoruiyong.ui.MainFrame;
+import com.luoruiyong.util.DocumentUtil;
 
 public class FunctionPanel extends JPanel {
 	private JButton btnEncrypt;
@@ -21,20 +31,10 @@ public class FunctionPanel extends JPanel {
 	private JButton btnProbabilityCrack;
 	private JButton btnAnalyze;
 	
-	private int key = -1;
-	private char[][] keyMatrix = null;
-	private int[][] matrixData = null;
 	private boolean isReserveNotLetter = false;
 	private boolean isIgnoreCase = false;
-	private String plaintext = null;
-	private String ciphertext = null;
-	private boolean isCaeserEncypted = false;
-	private boolean isPlayfairEncypted = false;
-	private boolean isHillEncypted = false;
-	private int arthmeticType = ArithmeticPanel.CAESAR;
-	private String status = Status.READY;
-	private OnDisposeTextChangedListener disposeTextChangedListener;
-	private OnStatusChangedListener statusChangedListener;
+	private String analyzeType = Status.NO_ANAYLYSIS;
+	private OnMessageChangedListener messageChangedListener;
 	
 	public FunctionPanel() {
 		setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
@@ -43,10 +43,6 @@ public class FunctionPanel extends JPanel {
 		btnExhaustCrack = new JButton("穷举法破解");
 		btnProbabilityCrack = new JButton("概率统计破解");
 		btnAnalyze = new JButton("分析");
-		btnEncrypt.setEnabled(false);
-		btnDecrypt.setEnabled(false);
-		btnExhaustCrack.setEnabled(false);
-		btnProbabilityCrack.setEnabled(false);
 		btnAnalyze.setEnabled(false);
 		add(btnEncrypt);
 		add(btnDecrypt);
@@ -60,17 +56,18 @@ public class FunctionPanel extends JPanel {
 		ActionListener actionListener = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				Message message = MainFrame.getMessage();
 				Object source = e.getSource();
 				if(source.equals(btnEncrypt)) {
-					onEncrypt();
+					onEncrypt(message);
 				}else if(source.equals(btnDecrypt)) {
-					onDecrypt();
+					onDecrypt(message);
 				}else if(source.equals(btnExhaustCrack)) {
-					onExhaustCrack();
+					onExhaustCrack(message);
 				}else if(source.equals(btnProbabilityCrack)) {
-					onProbabilityCrack();
+					onProbabilityCrack(message);
 				}else if(source.equals(btnAnalyze)) {
-					onAnalyze();
+					onAnalyze(message);
 				}
 			}
 		};
@@ -81,176 +78,148 @@ public class FunctionPanel extends JPanel {
 		btnAnalyze.addActionListener(actionListener);
 	}
 	
-	public void onEncrypt() {
-		String ciphertext;
-		switch (arthmeticType) {
-		case ArithmeticPanel.CAESAR:
-			ciphertext = Caesar.encrypt(plaintext, key,isReserveNotLetter,isIgnoreCase);
-			if(ciphertext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，明文不包含英文字母或为空。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.ciphertext = ciphertext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onCipherextChanged(ciphertext);
-				}
-				isCaeserEncypted = true;
-				btnAnalyze.setEnabled(isCaeserEncypted);
-				JOptionPane.showMessageDialog(getParent(), "使用Caesar密码算法加密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			}
+	public void onEncrypt(Message message) {
+		String ciphertext = null;
+		switch (message.getArithmeticType()) {
+		case CAESAR:
+			ciphertext = Caesar.encrypt(message.getPlaintext(), Integer.parseInt(message.getKey()),isReserveNotLetter,isIgnoreCase);
 			break;
-		case ArithmeticPanel.PLAYFAIR:
-			ciphertext = Playfair.encrypt(plaintext, keyMatrix);
-			if(ciphertext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，明文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.ciphertext = ciphertext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onCipherextChanged(ciphertext);
-				}
-				isPlayfairEncypted = true;
-				btnAnalyze.setEnabled(isPlayfairEncypted);
-				JOptionPane.showMessageDialog(getParent(), "使用Playfair密码算法加密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			}
+		case PLAYFAIR:
+			ciphertext = Playfair.encrypt(message.getPlaintext(), message.getKey());
 			break;
-		case ArithmeticPanel.HILL:
-			ciphertext = Hill.encrypt(plaintext, matrixData);
-			if(ciphertext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，明文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.ciphertext = ciphertext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onCipherextChanged(ciphertext);
-				}
-				isHillEncypted = true;
-				btnAnalyze.setEnabled(isHillEncypted);
-				JOptionPane.showMessageDialog(getParent(), "使用Hill3密码算法加密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			}
+		case HILL:
+			ciphertext = Hill.encrypt(message.getPlaintext(), message.getKey());
 			break;
 		}
-	}
-	
-	public void onDecrypt() {
-		String plaintext;
-		switch (arthmeticType) {
-		case ArithmeticPanel.CAESAR:
-			plaintext = Caesar.decrypt(ciphertext, key,isReserveNotLetter,isIgnoreCase);
-			if(plaintext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，密文不包含英文字母或为空。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.plaintext = plaintext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onPlaintextChanged(plaintext);
-				}
-				JOptionPane.showMessageDialog(getParent(), "使用Caesar密码算法解密成功。","提示",JOptionPane.PLAIN_MESSAGE);
+		if(ciphertext == null) {
+			if(messageChangedListener != null) {
+				messageChangedListener.onOnlyStatusChanged(Status.ENCRYPT_FAILED);
 			}
-			break;
-		case ArithmeticPanel.PLAYFAIR:
-			plaintext = Playfair.decrypt(ciphertext, keyMatrix);
-			if(plaintext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，密文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.plaintext = plaintext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onPlaintextChanged(plaintext);;
-				}
-				JOptionPane.showMessageDialog(getParent(), "使用Playfair密码算法解密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			}
-			break;
-		case ArithmeticPanel.HILL:
-			plaintext = Hill.decrypt(ciphertext, matrixData);
-			if(plaintext == null) {
-				JOptionPane.showMessageDialog(getParent(),"对不起，密文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			}else {
-				this.plaintext = plaintext;
-				if(disposeTextChangedListener != null) {
-					disposeTextChangedListener.onPlaintextChanged(plaintext);;
-				}
-				JOptionPane.showMessageDialog(getParent(), "使用Hill3密码算法解密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			}
-			break;
+			btnAnalyze.setEnabled(false);
+			JOptionPane.showMessageDialog(getParent(),"对不起，明文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
+		}else if(messageChangedListener != null) {
+			message.setCiphertext(ciphertext);
+			message.setStatus(Status.ENCRYPT_SUCCEED);
+			messageChangedListener.onCiphertextChanged(message);
+			btnAnalyze.setEnabled(true);
+			analyzeType = Status.ENCRYPT_ANALYSIS;
 		}
-	}
-	
-	public void onExhaustCrack() {
+		//JOptionPane.showMessageDialog(getParent(), "使用Caesar密码算法加密成功。","提示",JOptionPane.PLAIN_MESSAGE);
+			
 		
 	}
 	
-	public void onProbabilityCrack() {
+	public void onDecrypt(Message message) {
+		String plaintext = null;
+		switch (message.getArithmeticType()) {
+		case CAESAR:
+			plaintext = Caesar.decrypt(message.getCiphertext(), Integer.parseInt(message.getKey()),isReserveNotLetter,isIgnoreCase);
+			break;
+		case PLAYFAIR:
+			plaintext = Playfair.decrypt(message.getCiphertext(), message.getKey());
+			break;
+		case HILL:
+			plaintext = Hill.decrypt(message.getCiphertext(), message.getKey());
+			break;
+		}
+		if(plaintext == null) {
+			if(messageChangedListener != null) {
+				messageChangedListener.onOnlyStatusChanged(Status.DECRYPT_FAILED);
+			}
+			btnAnalyze.setEnabled(false);
+			JOptionPane.showMessageDialog(getParent(),"对不起，密文不包含英文字母或为空，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
+		}
+		else if(messageChangedListener != null){
+			message.setPlaintext(plaintext);
+			message.setStatus(Status.DECRYPT_SUCCEED);
+			messageChangedListener.onPlaintextChanged(message);
+			btnAnalyze.setEnabled(true);
+			analyzeType = Status.DECRYPT_ANALYSIS;
+		}
 		
 	}
 	
-	public void onAnalyze() {
-		switch (arthmeticType) {
-		case ArithmeticPanel.CAESAR:
-			
-			break;
-		case ArithmeticPanel.PLAYFAIR:
-			
-			break;
-		case ArithmeticPanel.HILL:
-	
-			break;
-		}
-	}
-	
-	private void setFunctionEnabled(boolean tag) {
-		btnEncrypt.setEnabled(tag);
-		btnDecrypt.setEnabled(tag);
-		btnExhaustCrack.setEnabled(tag);
-		btnProbabilityCrack.setEnabled(tag);
-		if(arthmeticType != ArithmeticPanel.CAESAR) {
-			btnExhaustCrack.setVisible(false);
-			btnProbabilityCrack.setVisible(false);
+	public void onExhaustCrack(Message message) {
+		ArrayList<CaesarMessage> messages = Caesar.exhaustCrack(message.getCiphertext(),isReserveNotLetter,isIgnoreCase);
+		if(messages != null) {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Caesar密码穷举法破解\n可能的密钥\t可能的明文\n");
+			for(CaesarMessage msg : messages) {
+				builder.append(msg.getKey()+"\t"+msg.getPlaintext()+"\n");
+			}
+			builder.append("\n详情可点击“分析”查看");
+			message.setPlaintext(builder.toString());
+			message.setStatus(Status.EXHAUST_CRACK);
+			if(messageChangedListener != null) {
+				messageChangedListener.onPlaintextChanged(message);
+			}
+			btnAnalyze.setEnabled(true);
+			analyzeType = Status.EXHAUST_CRACK_ANAYLYZE;
 		}else {
-			btnExhaustCrack.setVisible(true);
-			btnProbabilityCrack.setVisible(true);
+			if(messageChangedListener != null) {
+				messageChangedListener.onOnlyStatusChanged(Status.CRACK_FAILED);
+			}
+			JOptionPane.showMessageDialog(getParent(),"对不起，密文未包含英文字母或为空，无法进行破解\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
+		}
+	}
+	
+	public void onProbabilityCrack(Message message) {
+		CaesarMessage caesarMessage = Caesar.autoCrack(message.getCiphertext(), isReserveNotLetter, isIgnoreCase);
+		if(caesarMessage != null) {
+			String text = "Caesar密码概率统计破解\n可能密钥："+caesarMessage.getKey()+"\n得到的明文："+caesarMessage.getPlaintext()
+							+"\n余弦相似度："+caesarMessage.getSimilarity()+"%\n详情可点击“分析”查看";
+			message.setPlaintext(text);
+			message.setStatus(Status.PROBABILITY_CRACK);
+			if(messageChangedListener != null) {
+				messageChangedListener.onPlaintextChanged(message);
+			}
+			btnAnalyze.setEnabled(true);
+			analyzeType = Status.PROBABILITY_CRACK_ANALYZE;
+		}else {
+			if(messageChangedListener != null) {
+				messageChangedListener.onOnlyStatusChanged(Status.CRACK_FAILED);
+			}
+			JOptionPane.showMessageDialog(getParent(),"对不起，密文未包含英文字母或为空，无法进行破解\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
+		}
+	}
+	
+	public void onAnalyze(Message message) {
+		if(messageChangedListener != null) {
+			messageChangedListener.onOnlyStatusChanged(analyzeType);
 		}
 	}
 	
 	// 设置密码算法对应的界面
-	public void setArithmeticType(int arithmeticType) {
-		this.arthmeticType = arithmeticType;
-		switch (arithmeticType) {
-		case ArithmeticPanel.CAESAR:
+	public void updateInterface(Message message) {
+		//System.out.println(message);
+		switch (message.getArithmeticType()) {
+		case CAESAR:
 			btnExhaustCrack.setVisible(true);
 			btnProbabilityCrack.setVisible(true);
-			setFunctionEnabled(key == -1 ? false : true);
-			btnAnalyze.setEnabled(isCaeserEncypted);
 			break;
-		case ArithmeticPanel.PLAYFAIR:
+		case PLAYFAIR:
 			btnExhaustCrack.setVisible(false);
 			btnProbabilityCrack.setVisible(false);
-			setFunctionEnabled(keyMatrix == null ? false : true);
-			btnAnalyze.setEnabled(isPlayfairEncypted);
 			break;
-		case ArithmeticPanel.HILL:
+		case HILL:
 			btnExhaustCrack.setVisible(false);
 			btnProbabilityCrack.setVisible(false);
-			setFunctionEnabled(matrixData == null ? false : true);
-			btnAnalyze.setEnabled(isHillEncypted);
 			break;
+		}
+		if(message.getStatus().equals(Status.NO_SECRET_KEY) 
+				|| message.getStatus().equals(Status.SECRET_KEY_INVALID)) {
+			// 密钥无效
+			btnEncrypt.setEnabled(false);
+			btnDecrypt.setEnabled(false);
+			btnAnalyze.setEnabled(false);
+		}else {
+			btnEncrypt.setEnabled(true);
+			btnDecrypt.setEnabled(true);
 		}
 	}
 	
-	public void setCaesarSecretKey(int key) {
-		this.key = key;
-		isCaeserEncypted = false;
-		btnAnalyze.setEnabled(isCaeserEncypted);
-		setFunctionEnabled(key == -1 ? false : true);
-	}
-	
-	public void setPlayfairSecretKey(char[][] keyMatrix) {
-		this.keyMatrix = keyMatrix;
-		isPlayfairEncypted = false;
-		btnAnalyze.setEnabled(isPlayfairEncypted);
-		setFunctionEnabled(keyMatrix == null ? false : true);
-	}
-
-	public void setHillSecretKey(int[][] matrixData) {
-		this.matrixData = matrixData;
-		isHillEncypted = false;
-		btnAnalyze.setEnabled(isHillEncypted);
-		setFunctionEnabled(matrixData == null ? false : true);
+	public void setAnaylzable(boolean tag) {
+		btnAnalyze.setEnabled(tag);
 	}
 	
 	public void setCaesarSetting(boolean isReserveNotLetter,boolean isIgnoreCase) {
@@ -258,31 +227,7 @@ public class FunctionPanel extends JPanel {
 		this.isIgnoreCase = isIgnoreCase;
 	}
 	
-	public void setPlaintext(String plaintext) {
-		this.plaintext = plaintext;
-	}
-	
-	public void setCiphertext(String ciphertext) {
-		this.ciphertext = ciphertext;
-		btnAnalyze.setEnabled(false);
-		isCaeserEncypted = false;
-		isPlayfairEncypted = false;
-	}
-	
-	public void setOnStatusChangedListener(OnStatusChangedListener listener) {
-		this.statusChangedListener = listener;
-	}
-	
-	public void setOnDisposeTextChangedListener(OnDisposeTextChangedListener listener) {
-		this.disposeTextChangedListener = listener;
-	}
-	
-	public interface OnDisposeTextChangedListener {
-		void onPlaintextChanged(String plaintext);
-		void onCipherextChanged(String ciphertext);
-	}
-	
-	public interface OnStatusChangedListener{
-		void onStatusChanged();
+	public void setOnMessageChangedListener(OnMessageChangedListener listener){
+		this.messageChangedListener = listener;
 	}
 }

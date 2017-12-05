@@ -6,12 +6,20 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
@@ -23,6 +31,7 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import com.luoruiyong.bean.CaesarMessage;
 import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.ArithmeticType;
 import com.luoruiyong.myview.ArithmeticPanel;
 import com.luoruiyong.myview.MenuManager;
 import com.luoruiyong.myview.ProcessPanel;
@@ -32,6 +41,7 @@ import com.luoruiyong.password.Hill;
 import com.luoruiyong.password.Playfair;
 import com.luoruiyong.ui.MainFrame;
 import com.luoruiyong.util.CompareUtil;
+import com.luoruiyong.util.DocumentUtil;
 import com.luoruiyong.util.MatrixUtil;
 
 /**
@@ -42,7 +52,6 @@ import com.luoruiyong.util.MatrixUtil;
 public class Main {
 	public static void main(String[] args) {
 		MainFrame jFrame = new MainFrame("π≈µ‰√‹¬Î”¶”√");
-	
 		
 		
 		

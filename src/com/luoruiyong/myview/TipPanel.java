@@ -9,6 +9,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.TextField;
+import java.awt.TrayIcon.MessageType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -28,50 +29,50 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.luoruiyong.OnMessageChangedListener;
+import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.ArithmeticType;
+import com.luoruiyong.constant.Status;
 import com.luoruiyong.password.Caesar;
 import com.luoruiyong.password.Hill;
 import com.luoruiyong.password.Playfair;
+import com.luoruiyong.ui.MainFrame;
 import com.luoruiyong.ui.MainFrameConstraints;
+import com.luoruiyong.util.MatrixUtil;
 
 public class TipPanel extends JPanel {
 	
 	private static final int PLAYFAIR_M = 5;
 	private static final int HILL_M = 3;
 	
-	private JTextField tfCaesarKey;
-	private JTextField tfPlayfairKey;
-	private JTextField tfHillKey;
+	private JTextField tfKey;
 	private JCheckBox cbReserveNotLetter;
 	private JCheckBox cbIgnoreCase;
 	private JButton btnTestKey;
+	
 	private JPanel playfairMatrixPanel;
 	private JLabel playfairMatrixLabels[];
 	private JLabel playfairMatrixLabel;
 	private JPanel hillMatrixPanel;
 	private JLabel hillMatrixLabels[];
 	private JLabel hillMatrixLabel;
-	private int arithmeticType = ArithmeticPanel.CAESAR;
-	private OnSecretKeyChangedListener keyChangedListener;
+	
+	private ArithmeticType arithmeticType = ArithmeticType.CAESAR;
 	private OnCaesarSettingChangedListener settingChangedListener;
+	private OnMessageChangedListener messageChangedListener;
 	
 	public TipPanel() {
 		JLabel labelKey = new JLabel("密钥",JLabel.CENTER);
-		tfCaesarKey = new JTextField(60);
-		tfPlayfairKey = new JTextField(60);
-		tfHillKey = new JTextField(60);
+		tfKey = new JTextField(60);
 		btnTestKey = new JButton("测试密钥");
-		tfCaesarKey.setMaximumSize(tfCaesarKey.getPreferredSize());
+		tfKey.setMaximumSize(tfKey.getPreferredSize());
 		cbReserveNotLetter = new JCheckBox("保留非字母字符");
 		cbIgnoreCase = new JCheckBox("忽略字母大小写");
-		tfPlayfairKey.setVisible(false);
-		tfHillKey.setVisible(false);
-		
+	
 		Box horizontalBox = Box.createHorizontalBox();
 		horizontalBox.add(labelKey);
 		horizontalBox.add(Box.createHorizontalStrut(10));
-		horizontalBox.add(tfCaesarKey);
-		horizontalBox.add(tfPlayfairKey);
-		horizontalBox.add(tfHillKey);
+		horizontalBox.add(tfKey);
 		horizontalBox.setMaximumSize(horizontalBox.getPreferredSize());
 		
 		// playfair密钥矩阵
@@ -123,25 +124,28 @@ public class TipPanel extends JPanel {
 		btnTestKey.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				boolean tag = false;
+				String key = tfKey.getText().trim();
 				switch (arithmeticType) {
-				case ArithmeticPanel.CAESAR:
-					int key = checkCaesarSecretKey();
-					if(keyChangedListener != null) {
-						keyChangedListener.onCaesarSecretKeyChanged(key);
-					}
+				case CAESAR:
+					tag = checkCaesarSecretKey(key);
 					break;
-				case ArithmeticPanel.PLAYFAIR:
-					char[][] keyMatrix = checkPlayfairSecretKey();
-					if(keyChangedListener != null) {
-						keyChangedListener.onPlayfairSecretKeyChanged(keyMatrix);
-					}
+				case PLAYFAIR:
+					tag = checkPlayfairSecretKey(key);
 					break;
-				case ArithmeticPanel.HILL:
-					int[][] matrixData = checkHillSecretKey();
-					if(keyChangedListener != null) {
-						keyChangedListener.onHillSecretKeyChanged(matrixData);
-					}
+				case HILL:
+					tag = checkHillSecretKey(key);
 					break;
+				}
+				if(messageChangedListener != null) {
+					Message message = new Message();
+					message.setKey(key);
+					if(tag) {
+						message.setStatus(Status.SECRET_KEY_AVAILABLE);
+					}else {
+						message.setStatus(Status.SECRET_KEY_INVALID);
+					}
+					messageChangedListener.onSecretKeyChanged(message);
 				}
 			}
 		});
@@ -170,106 +174,91 @@ public class TipPanel extends JPanel {
 			}
 			
 			private void textChanged() {
-				if(keyChangedListener == null) {
-					return;
+				if(messageChangedListener != null) {
+					Message message = new Message();
+					message.setKey(tfKey.getText());
+					message.setStatus(Status.NO_SECRET_KEY);
+					messageChangedListener.onSecretKeyChanged(message);
 				}
-				switch (arithmeticType) {
-				case ArithmeticPanel.CAESAR:
-					keyChangedListener.onCaesarSecretKeyChanged(-1);
-					break;
-				case ArithmeticPanel.PLAYFAIR:
-					keyChangedListener.onPlayfairSecretKeyChanged(null);
-					break;
-				case ArithmeticPanel.HILL:
-					keyChangedListener.onHillSecretKeyChanged(null);
-					break;
+				if(arithmeticType == ArithmeticType.PLAYFAIR) {
+					for(int i = 0;i < PLAYFAIR_M * PLAYFAIR_M;i++) {
+						playfairMatrixLabels[i].setText("");
+					}
+				}else if(arithmeticType == ArithmeticType.HILL) {
+					for(int i = 0;i < HILL_M * HILL_M;i++) {
+						hillMatrixLabels[i].setText("");
+					}
 				}
 			}
 		};
-		tfCaesarKey.getDocument().addDocumentListener(documentListener);
-		tfPlayfairKey.getDocument().addDocumentListener(documentListener);
-		tfHillKey.getDocument().addDocumentListener(documentListener);
+		tfKey.getDocument().addDocumentListener(documentListener);
 	}
 	
-	public int checkCaesarSecretKey() {
-		String testKey = tfCaesarKey.getText().trim();
+	public boolean checkCaesarSecretKey(String testKey) {
 		if(testKey.equals("")) {
 			JOptionPane.showMessageDialog(getParent(), "对不起，密钥不能空。","提示",JOptionPane.WARNING_MESSAGE);
-			return -1;
+			return false;
 		}
 		if(Caesar.isKeyAvailable(testKey)) {
-			tfCaesarKey.setText(testKey);
-			JOptionPane.showMessageDialog(getParent(), "密钥有效,您可以使用该密钥对明文加密或对密文解密。","提示",JOptionPane.PLAIN_MESSAGE);
-			return Integer.parseInt(testKey);
+			return true;
 		}else {
 			JOptionPane.showMessageDialog(getParent(), 
 					"对不起，Caesar密码算法要求密钥为0~25的整数，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			return -1;
+			return false;
 		}
 	}
 	
-	public char[][] checkPlayfairSecretKey() {
-		String testKey = tfPlayfairKey.getText().trim();
+	public boolean checkPlayfairSecretKey(String testKey) {
 		if(testKey.equals("")) {
 			JOptionPane.showMessageDialog(getParent(), "对不起，密钥不能空。","提示",JOptionPane.WARNING_MESSAGE);
-			return null;
+			return false;
 		}
 		char[][] keyMatrix = Playfair.isKeyAvailable(testKey);
 		if(keyMatrix == null) {
-			for(int i = 0;i < PLAYFAIR_M * PLAYFAIR_M;i++) {
-				playfairMatrixLabels[i].setText("");
-			}
 			JOptionPane.showMessageDialog(getParent(), "对不起，你输入的密钥不含英文字母，请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			return null;
+			return false;
 		}else {
 			for(int i = 0;i < PLAYFAIR_M * PLAYFAIR_M;i++) {
 				playfairMatrixLabels[i].setText(keyMatrix[i/PLAYFAIR_M][i%PLAYFAIR_M] + "");
 			}
-			tfPlayfairKey.setText(testKey);
-			JOptionPane.showMessageDialog(getParent(), "密钥有效,您可以使用该密钥对明文加密或对密文解密。","提示",JOptionPane.PLAIN_MESSAGE);						
-			return keyMatrix;
+			return true;
 		}
 	}
 	
-	public int[][] checkHillSecretKey(){
-		String testKey = tfHillKey.getText().trim();
+	public boolean checkHillSecretKey(String testKey){
 		if(testKey.equals("")) {
 			JOptionPane.showMessageDialog(getParent(), "对不起，密钥不能空。","提示",JOptionPane.WARNING_MESSAGE);
-			return null;
+			return false;
 		}
 		int [][] matrixData = Hill.isKeyAvailable(testKey);
 		if(matrixData == null) {
-			for(int i = 0;i < HILL_M * HILL_M;i++) {
-				hillMatrixLabels[i].setText("");
-			}
 			JOptionPane.showMessageDialog(getParent(), "对不起，你输入的密钥无效，可能存在的原因有：\n1.字母个数少于"+HILL_M*HILL_M+"个\n2.数字输入范围不合理，数字范围为0~25\n3.数字输入格式不对，数字之间使用一个空格隔开\n4.生产的密钥矩阵无对应的逆矩阵，\n请确认后重新输入。","提示",JOptionPane.WARNING_MESSAGE);
-			return null;
+			return false;
 		}else {
 			for(int i = 0;i < HILL_M * HILL_M;i++) {
 				hillMatrixLabels[i].setText(matrixData[i/HILL_M][i%HILL_M]+"");
 			}
-			tfHillKey.setText(testKey);
-			JOptionPane.showMessageDialog(getParent(), "密钥有效,您可以使用该密钥对明文加密或对密文解密。","提示",JOptionPane.PLAIN_MESSAGE);
-			return matrixData;
+			return true;
 		}	
 	}
 	
 	
 	// 设置密码算法对应的界面
-	public void setArithmeticType(int arithmeticType) {
-		this.arithmeticType = arithmeticType;
+	public void setArithmeticType(Message message) {
+		tfKey.setText(message.getKey());
+		arithmeticType = message.getArithmeticType();
 		switch (arithmeticType) {
-		case ArithmeticPanel.CAESAR:
+		case CAESAR:
 			setCaesarVisible(true);
 			setPlayfairVisible(false);
 			setHillVisible(false);
 			break;
-		case ArithmeticPanel.PLAYFAIR:
+		case PLAYFAIR:
 			setCaesarVisible(false);
 			setPlayfairVisible(true);
 			setHillVisible(false);
 			break;
-		case ArithmeticPanel.HILL:
+		case HILL:
 			setCaesarVisible(false);
 			setPlayfairVisible(false);
 			setHillVisible(true);
@@ -278,19 +267,16 @@ public class TipPanel extends JPanel {
 	}
 	
 	private void setCaesarVisible(boolean tag) {
-		tfCaesarKey.setVisible(tag);
 		cbIgnoreCase.setVisible(tag);
 		cbReserveNotLetter.setVisible(tag);
 	}
 	
 	private void setPlayfairVisible(boolean tag) {
-		tfPlayfairKey.setVisible(tag);
 		playfairMatrixLabel.setVisible(tag);
 		playfairMatrixPanel.setVisible(tag);
 	}
 	
 	private void setHillVisible(boolean tag) {
-		tfHillKey.setVisible(tag);
 		hillMatrixLabel.setVisible(tag);
 		hillMatrixPanel.setVisible(tag);
 	}
@@ -299,14 +285,8 @@ public class TipPanel extends JPanel {
 		this.settingChangedListener = listener;
 	}
 	
-	public void setOnSecretKeyChangedListener(OnSecretKeyChangedListener listener) {
-		this.keyChangedListener = listener;
-	}
-	
-	public interface OnSecretKeyChangedListener {
-		void onCaesarSecretKeyChanged(int key);
-		void onPlayfairSecretKeyChanged(char[][] keyMatrix);
-		void onHillSecretKeyChanged(int[][] matrixData);
+	public void setOnMessageChangedListener(OnMessageChangedListener listener) {
+		this.messageChangedListener = listener;
 	}
 	
 	public interface OnCaesarSettingChangedListener{

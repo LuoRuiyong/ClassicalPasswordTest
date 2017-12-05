@@ -1,5 +1,7 @@
 package com.luoruiyong.password;
 
+import javax.naming.InitialContext;
+
 import com.luoruiyong.util.CharacterUtil;
 import com.luoruiyong.util.MatrixUtil;
 
@@ -22,6 +24,14 @@ public class Hill {
 		
 		if(MatrixUtil.getDimensionality(matrixData) == 0) {
 			// 矩阵密钥无效
+			return null;
+		}
+		return praser(getDividePlaintext(plaintext), matrixData);
+	}
+	
+	public static String encrypt(String plaintext,String key) {
+		int[][] matrixData = isKeyAvailable(key);
+		if(matrixData == null) {
 			return null;
 		}
 		return praser(getDividePlaintext(plaintext), matrixData);
@@ -50,6 +60,23 @@ public class Hill {
 		return praser(ciphertext, inverseMatrixData);
 	}
 	
+	public static String decrypt(String ciphertext,String key) {
+		int[][] matrixData = isKeyAvailable(key);
+		if(matrixData == null) {
+			return null;
+		}
+		matrixData = MatrixUtil.getForceInverseMatrix(matrixData);
+		ciphertext = CharacterUtil.filterNotLetter(ciphertext);
+		if(ciphertext == null || ciphertext.length() < M) {
+			return null;
+		}else {
+			if(ciphertext.length() % M != 0) {
+				ciphertext = ciphertext.substring(0, ciphertext.length() - ciphertext.length() % 3).toUpperCase();
+			}
+		}
+		return praser(ciphertext, matrixData);
+	}
+	
 	/**
 	 * 解析算法
 	 * @param text  待解析文本
@@ -74,6 +101,7 @@ public class Hill {
 		}
 		return textBuilder.toString();
 	}
+	
 	
 	/**
 	 * 分组处理

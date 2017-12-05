@@ -8,6 +8,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Panel;
 import java.awt.TextField;
+import java.awt.TrayIcon.MessageType;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -19,12 +20,13 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.luoruiyong.myview.FunctionPanel.OnDisposeTextChangedListener;
+import com.luoruiyong.OnMessageChangedListener;
+import com.luoruiyong.bean.Message;
+import com.luoruiyong.constant.Status;
 import com.luoruiyong.myview.TipPanel.OnCaesarSettingChangedListener;
-import com.luoruiyong.myview.TipPanel.OnSecretKeyChangedListener;
 import com.luoruiyong.ui.MainFrameConstraints;
 
-public class ProcessPanel extends JPanel implements OnDisposeTextChangedListener{
+public class ProcessPanel extends JPanel{
 	
 	private JPanel plaintextPanel;
 	private JPanel ciphertextPanel;
@@ -32,6 +34,7 @@ public class ProcessPanel extends JPanel implements OnDisposeTextChangedListener
 	private FunctionPanel functionPanel; 
 	private JTextArea taPlaintext ;
 	private JTextArea taCiphertext;
+	private OnMessageChangedListener messageChangedListener;
 	
 	public ProcessPanel() {
 		setBackground(Color.orange);
@@ -89,16 +92,22 @@ public class ProcessPanel extends JPanel implements OnDisposeTextChangedListener
 			}
 			
 			private void textChanged(DocumentEvent event) {
-				if(event.getDocument().equals(taPlaintext.getDocument())) {
-					functionPanel.setPlaintext(taPlaintext.getText());
-				}else {
-					functionPanel.setCiphertext(taCiphertext.getText());
+				if(messageChangedListener !=null) {
+					Message message = new Message();
+					if(event.getDocument().equals(taPlaintext.getDocument())) {
+						message.setPlaintext(taPlaintext.getText());
+						message.setStatus(Status.NO_ANAYLYSIS);
+						messageChangedListener.onPlaintextChanged(message);
+					}else {
+						message.setCiphertext(taCiphertext.getText());
+						message.setStatus(Status.NO_ANAYLYSIS);
+						messageChangedListener.onCiphertextChanged(message);
+					}
 				}
 			}
 		};
 		taPlaintext.getDocument().addDocumentListener(documentListener);
 		taCiphertext.getDocument().addDocumentListener(documentListener);
-		functionPanel.setOnDisposeTextChangedListener(this);
 	}
 	
 	public TipPanel getTipPanel() {
@@ -109,15 +118,27 @@ public class ProcessPanel extends JPanel implements OnDisposeTextChangedListener
 		return functionPanel;
 	}
 	
-	// 解密成功回调
-	@Override
-	public void onPlaintextChanged(String plaintext) {
-		taPlaintext.setText(plaintext);
+	public void showPlaintext(String plaintext) {
+		taPlaintext.setText(plaintext);;
 	}
-
-	// 加密成功回调
-	@Override
-	public void onCipherextChanged(String ciphertext) {
-		taCiphertext.setText(ciphertext);
+	
+	public void showCiphertext(String ciphertext) {
+		taCiphertext.setText(ciphertext);;
+	}
+	
+	public void updateInterface(Message message) {
+		if(message == null) {
+			return;
+		}
+		functionPanel.updateInterface(message);
+		tipPanel.setArithmeticType(message);
+		taPlaintext.setText(message.getPlaintext());
+		taCiphertext.setText(message.getCiphertext());
+		
+		
+	}
+	
+	public void setOnMessageChangedListener(OnMessageChangedListener listener) {
+		this.messageChangedListener = listener;
 	}
 }
