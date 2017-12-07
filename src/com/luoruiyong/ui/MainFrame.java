@@ -1,21 +1,15 @@
 package com.luoruiyong.ui;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
-import java.io.File;
-import java.util.IllegalFormatCodePointException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import com.luoruiyong.bean.Message;
 import com.luoruiyong.constant.ArithmeticType;
@@ -32,6 +26,11 @@ import com.luoruiyong.OnMessageChangedListener;
 public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 				OnMessageChangedListener,OnClearRecordListener{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private static Message message = new Message();
 	
 	private MenuManager menuManager;
@@ -77,8 +76,7 @@ public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		panel.add(new JLabel("状态："));
 		panel.add(statusLabel);
-		panel.setBackground(Color.white);;
-		
+		panel.setBorder(BorderFactory.createLineBorder(Color.orange,1));
 		setMenuBar(menuManager);
 		setLayout(new GridBagLayout());
 		add(arithmeticPanel, new MainFrameConstraints(0,0).
@@ -103,9 +101,7 @@ public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 	}
 	
 	public void initData() {
-		if(!new File(DocumentUtil.FILE_PATH).exists()) {
-			DocumentUtil.createXmlSettingFile();
-		}
+		DocumentUtil.createXmlSettingFile();
 		message = DocumentUtil.getMessage(ArithmeticType.CAESAR);
 		message.setStatus(Status.NO_SECRET_KEY);
 		statusLabel.setText(message.getStatus());
@@ -135,6 +131,7 @@ public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 	public void onArithmeticTypeChanged(Message msg) {
 		message = msg;
 		processPanel.updateInterface(message);
+		resultAnalyzePanel.setArithmeticType(message.getArithmeticType());
 	}
 	
 	@Override
@@ -147,18 +144,12 @@ public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 				|| status.equals(Status.DECRYPT_FAILED)
 						|| status.equals(Status.CRACK_FAILED)) {
 			processPanel.getFunctionPanel().setAnaylzable(false);
-		}else if(status.equals(Status.ENCRYPT_ANALYSIS)){
-			
-		}else if(status.equals(Status.DECRYPT_ANALYSIS)){
-			
-		}else if(status.equals(Status.EXHAUST_CRACK_ANAYLYZE)){
-			
-		}else if(status.equals(Status.PROBABILITY_CRACK_ANALYZE)){
-			
+		}else if(status.equals(Status.ENCRYPT_ANALYSIS) 
+				||status.equals(Status.DECRYPT_ANALYSIS)
+					||status.equals(Status.EXHAUST_CRACK_ANAYLYZE)
+						||status.equals(Status.PROBABILITY_CRACK_ANALYZE)){
+			resultAnalyzePanel.showAnalyzeResult(message);
 		}
-		System.out.println(message.getStatus());
-		
-			
 	}
 	
 	// 明文内容发生改变回调，由明文输入框或解密重置明文输入框内容触发
@@ -228,5 +219,6 @@ public class MainFrame extends JFrame implements OnCaesarSettingChangedListener,
 		message.setKey("");
 		message.setStatus(Status.NO_SECRET_KEY);
 		processPanel.updateInterface(message);
+		resultAnalyzePanel.updateInterface();
 	}
 }

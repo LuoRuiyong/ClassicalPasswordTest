@@ -13,7 +13,7 @@ public class Status {
 	public static final String DECRYPT_FAILED = "解密失败";
 	public static final String EXHAUST_CRACK = "穷举法破解";
 	public static final String CRACK_FAILED = "破解失败";
-	public static final String PROBABILITY_CRACK = "概率破解";
+	public static final String PROBABILITY_CRACK = "概率破解成功";
 	public static final String ENCRYPT_ANALYSIS = "加密分析";
 	public static final String DECRYPT_ANALYSIS = "解密分析";
 	public static final String EXHAUST_CRACK_ANAYLYZE = "穷举法破解分析";

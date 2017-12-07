@@ -3,31 +3,25 @@ package com.luoruiyong.myview;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Panel;
-import java.awt.TextField;
-import java.awt.TrayIcon.MessageType;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.luoruiyong.OnMessageChangedListener;
 import com.luoruiyong.bean.Message;
 import com.luoruiyong.constant.Status;
-import com.luoruiyong.myview.TipPanel.OnCaesarSettingChangedListener;
 import com.luoruiyong.ui.MainFrameConstraints;
 
 public class ProcessPanel extends JPanel{
-	
+
+	private static final long serialVersionUID = 1L;
 	private JPanel plaintextPanel;
 	private JPanel ciphertextPanel;
 	private TipPanel tipPanel;
@@ -44,10 +38,10 @@ public class ProcessPanel extends JPanel{
 		functionPanel = new FunctionPanel();
 		
 		setLayout(new GridBagLayout());
-		add(plaintextPanel,new MainFrameConstraints(0, 0,1,1).setFill(GridBagConstraints.BOTH).setWeight(5, 1).setInsets(0,1,0,0));
-		add(tipPanel,new MainFrameConstraints(1, 0,1,1).setFill(GridBagConstraints.BOTH).setWeight(2, 1).setInsets(0,1,0,0));
-		add(ciphertextPanel,new MainFrameConstraints(2,0,1,1).setFill(GridBagConstraints.BOTH).setWeight(5, 1).setInsets(0,1,0,1));
-		add(functionPanel,new MainFrameConstraints(0,1,3,1).setFill(GridBagConstraints.BOTH).setWeight(1, 0).setInsets(1,1,1,1));
+		add(plaintextPanel,new MainFrameConstraints(0, 0,1,1).setFill(GridBagConstraints.BOTH).setWeight(5, 1).setInsets(0,2,0,0));
+		add(tipPanel,new MainFrameConstraints(1, 0,1,1).setFill(GridBagConstraints.BOTH).setWeight(2, 1).setInsets(0,2,0,0));
+		add(ciphertextPanel,new MainFrameConstraints(2,0,1,1).setFill(GridBagConstraints.BOTH).setWeight(5, 1).setInsets(0,2,0,2));
+		add(functionPanel,new MainFrameConstraints(0,1,3,1).setFill(GridBagConstraints.BOTH).setWeight(1, 0).setInsets(2,2,0,2));
 		initActionListener();
 	}
 	
@@ -61,6 +55,9 @@ public class ProcessPanel extends JPanel{
 		plaintextPanel.setLayout(new BorderLayout());
 		plaintextPanel.add(label,BorderLayout.NORTH);
 		plaintextPanel.add(scrollPane,BorderLayout.CENTER);
+		taPlaintext.setFont(new Font("宋体", Font.PLAIN, 15));
+		label.setFont(new Font("宋体", Font.BOLD, 15));
+		label.setPreferredSize(new Dimension(50, 30));
 	}
 	
 	public void initCiphertextPanel() {
@@ -69,11 +66,14 @@ public class ProcessPanel extends JPanel{
 		taCiphertext.setLineWrap(true);  // 自动换行
 		taCiphertext.setWrapStyleWord(true); // 断行不断字
 		JScrollPane scrollPane = new JScrollPane(taCiphertext);
-		JLabel labelCiphertext = new JLabel("密文",JLabel.CENTER);
+		JLabel label = new JLabel("密文",JLabel.CENTER);
 		taCiphertext.setLineWrap(true);
 		ciphertextPanel.setLayout(new BorderLayout());
-		ciphertextPanel.add(labelCiphertext,BorderLayout.NORTH);
+		ciphertextPanel.add(label,BorderLayout.NORTH);
 		ciphertextPanel.add(scrollPane,BorderLayout.CENTER);
+		taCiphertext.setFont(new Font("宋体", Font.PLAIN, 15));
+		label.setFont(new Font("宋体", Font.BOLD, 15));
+		label.setPreferredSize(new Dimension(50, 30));
 	}
 	
 	public void initActionListener() {

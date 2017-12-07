@@ -1,15 +1,10 @@
 package com.luoruiyong.myview;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Label;
-import java.awt.TextField;
-import java.awt.TrayIcon.MessageType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -17,15 +12,12 @@ import java.awt.event.ItemListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -36,12 +28,11 @@ import com.luoruiyong.constant.Status;
 import com.luoruiyong.password.Caesar;
 import com.luoruiyong.password.Hill;
 import com.luoruiyong.password.Playfair;
-import com.luoruiyong.ui.MainFrame;
 import com.luoruiyong.ui.MainFrameConstraints;
-import com.luoruiyong.util.MatrixUtil;
 
 public class TipPanel extends JPanel {
-	
+
+	private static final long serialVersionUID = 1L;
 	private static final int PLAYFAIR_M = 5;
 	private static final int HILL_M = 3;
 	
@@ -62,13 +53,14 @@ public class TipPanel extends JPanel {
 	private OnMessageChangedListener messageChangedListener;
 	
 	public TipPanel() {
+		
 		JLabel labelKey = new JLabel("ÃÜÔ¿",JLabel.CENTER);
 		tfKey = new JTextField(60);
 		btnTestKey = new JButton("²âÊÔÃÜÔ¿");
 		tfKey.setMaximumSize(tfKey.getPreferredSize());
 		cbReserveNotLetter = new JCheckBox("±£Áô·Ç×ÖÄ¸×Ö·û");
 		cbIgnoreCase = new JCheckBox("ºöÂÔ×ÖÄ¸´óÐ¡Ð´");
-	
+		
 		Box horizontalBox = Box.createHorizontalBox();
 		horizontalBox.add(labelKey);
 		horizontalBox.add(Box.createHorizontalStrut(10));
@@ -219,7 +211,11 @@ public class TipPanel extends JPanel {
 			return false;
 		}else {
 			for(int i = 0;i < PLAYFAIR_M * PLAYFAIR_M;i++) {
-				playfairMatrixLabels[i].setText(keyMatrix[i/PLAYFAIR_M][i%PLAYFAIR_M] + "");
+				if(keyMatrix[i/PLAYFAIR_M][i%PLAYFAIR_M] == 'I') {
+					playfairMatrixLabels[i].setText(keyMatrix[i/PLAYFAIR_M][i%PLAYFAIR_M] + "/J");
+				}else {
+					playfairMatrixLabels[i].setText(keyMatrix[i/PLAYFAIR_M][i%PLAYFAIR_M] + "");
+				}
 			}
 			return true;
 		}

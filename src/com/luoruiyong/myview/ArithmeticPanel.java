@@ -1,18 +1,15 @@
 package com.luoruiyong.myview;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.naming.InitialContext;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.border.EmptyBorder;
 
 import com.luoruiyong.OnMessageChangedListener;
 import com.luoruiyong.bean.Message;
@@ -22,6 +19,7 @@ import com.luoruiyong.util.DocumentUtil;
 
 public class ArithmeticPanel extends JPanel {
 
+	private static final long serialVersionUID = 1L;
 	private JRadioButton caesarButton;
 	private JRadioButton playfairButton;
 	private JRadioButton hillButton;
@@ -40,8 +38,12 @@ public class ArithmeticPanel extends JPanel {
 		add(playfairButton);
 		add(hillButton);
 		setLayout(new FlowLayout(FlowLayout.CENTER,40,10));
-		setBorder(BorderFactory.createLineBorder(Color.ORANGE,1));
+		setBorder(BorderFactory.createLineBorder(Color.ORANGE,2));
 		
+		Font font = new Font("ËÎÌו", Font.BOLD, 16);
+		caesarButton.setFont(font);
+		playfairButton.setFont(font);
+		hillButton.setFont(font);
 		initActionListener();
 	}
 	

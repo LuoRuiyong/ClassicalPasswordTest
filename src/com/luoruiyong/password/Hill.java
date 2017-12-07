@@ -1,7 +1,5 @@
 package com.luoruiyong.password;
 
-import javax.naming.InitialContext;
-
 import com.luoruiyong.util.CharacterUtil;
 import com.luoruiyong.util.MatrixUtil;
 

@@ -1,30 +1,29 @@
 package com.luoruiyong.myview;
 
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Array;
-import java.sql.ClientInfoStatus;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import org.omg.CORBA.PUBLIC_MEMBER;
-
 import com.luoruiyong.OnMessageChangedListener;
 import com.luoruiyong.bean.CaesarMessage;
 import com.luoruiyong.bean.Message;
-import com.luoruiyong.constant.ArithmeticType;
 import com.luoruiyong.constant.Status;
 import com.luoruiyong.password.Caesar;
 import com.luoruiyong.password.Hill;
 import com.luoruiyong.password.Playfair;
 import com.luoruiyong.ui.MainFrame;
-import com.luoruiyong.util.DocumentUtil;
 
 public class FunctionPanel extends JPanel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JButton btnEncrypt;
 	private JButton btnDecrypt;
 	private JButton btnExhaustCrack;
@@ -49,6 +48,13 @@ public class FunctionPanel extends JPanel {
 		add(btnExhaustCrack);
 		add(btnProbabilityCrack);
 		add(btnAnalyze);
+		
+		Font font = new Font("宋体", Font.BOLD, 15);
+		btnAnalyze.setFont(font);
+		btnDecrypt.setFont(font);
+		btnEncrypt.setFont(font);
+		btnExhaustCrack.setFont(font);
+		btnProbabilityCrack.setFont(font);
 		initActitonListener();
 	}
 	
@@ -104,9 +110,6 @@ public class FunctionPanel extends JPanel {
 			btnAnalyze.setEnabled(true);
 			analyzeType = Status.ENCRYPT_ANALYSIS;
 		}
-		//JOptionPane.showMessageDialog(getParent(), "使用Caesar密码算法加密成功。","提示",JOptionPane.PLAIN_MESSAGE);
-			
-		
 	}
 	
 	public void onDecrypt(Message message) {
@@ -140,11 +143,11 @@ public class FunctionPanel extends JPanel {
 	}
 	
 	public void onExhaustCrack(Message message) {
-		ArrayList<CaesarMessage> messages = Caesar.exhaustCrack(message.getCiphertext(),isReserveNotLetter,isIgnoreCase);
+		ArrayList<Message> messages = Caesar.exhaustCrack(message.getCiphertext(),isReserveNotLetter,isIgnoreCase);
 		if(messages != null) {
 			StringBuilder builder = new StringBuilder();
-			builder.append("Caesar密码穷举法破解\n可能的密钥\t可能的明文\n");
-			for(CaesarMessage msg : messages) {
+			builder.append("Caesar密码穷举法破解\n可能密钥  对应明文\n");
+			for(Message msg : messages) {
 				builder.append(msg.getKey()+"\t"+msg.getPlaintext()+"\n");
 			}
 			builder.append("\n详情可点击“分析”查看");
@@ -167,7 +170,7 @@ public class FunctionPanel extends JPanel {
 		CaesarMessage caesarMessage = Caesar.autoCrack(message.getCiphertext(), isReserveNotLetter, isIgnoreCase);
 		if(caesarMessage != null) {
 			String text = "Caesar密码概率统计破解\n可能密钥："+caesarMessage.getKey()+"\n得到的明文："+caesarMessage.getPlaintext()
-							+"\n余弦相似度："+caesarMessage.getSimilarity()+"%\n详情可点击“分析”查看";
+							+"\n可信度："+caesarMessage.getSimilarity()+"%\n详情可点击“分析”查看";
 			message.setPlaintext(text);
 			message.setStatus(Status.PROBABILITY_CRACK);
 			if(messageChangedListener != null) {

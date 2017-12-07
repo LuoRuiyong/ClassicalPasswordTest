@@ -1,6 +1,7 @@
 package com.luoruiyong.myview;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
@@ -11,22 +12,12 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
-import java.nio.channels.NonWritableChannelException;
-import java.nio.file.Path;
-import java.util.ArrayList;
 
-import javax.imageio.event.IIOReadWarningListener;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-
-import org.jfree.ui.KeyedComboBoxModel;
 
 import com.luoruiyong.OnMessageChangedListener;
 import com.luoruiyong.bean.Message;
@@ -35,6 +26,10 @@ import com.luoruiyong.ui.MainFrame;
 import com.luoruiyong.util.DocumentUtil;
 
 public class MenuManager extends MenuBar {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String[] mainMenuLabel = {"文件","编辑","帮助"};
 	private String childMenuItemLabel [][] = {{"打开明文文件","-","打开密文文件","-","保存明文为...","-","保存密文为...","-","退出"},
 											  {"清除明文","-","清除密文","-","清除所有"},
@@ -83,6 +78,7 @@ public class MenuManager extends MenuBar {
 			}
 			add(mainMenu[i]);
 		}
+		setFont(new Font("楷书", Font.PLAIN, 14));
 	}
 	
 	private class MyActionListener implements ActionListener{

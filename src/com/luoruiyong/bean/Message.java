@@ -13,7 +13,8 @@ public class Message {
 	public Message() {
 		
 	}
-	public Message(String plainttext, String ciphertext) {
+	public Message(String key,String plainttext,String ciphertext) {
+		this.key = key;
 		this.plaintext = plainttext;
 		this.ciphertext = ciphertext;
 	}

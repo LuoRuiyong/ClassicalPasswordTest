@@ -1,8 +1,8 @@
 package com.luoruiyong.password;
 
 import java.util.ArrayList;
-
 import com.luoruiyong.bean.CaesarMessage;
+import com.luoruiyong.bean.Message;
 import com.luoruiyong.util.CharacterUtil;
 
 /**
@@ -161,26 +161,26 @@ public class Caesar {
 	 * @param isIgnoreCase 是否忽略字母大小写
 	 * @return 可能的明文结果集
 	 */
-	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isReserveNotLetter,boolean isIgnoreCase){
+	public static ArrayList<Message> exhaustCrack(String ciphertext,boolean isReserveNotLetter,boolean isIgnoreCase){
 		if(!isReserveNotLetter) {
 			ciphertext = CharacterUtil.filterNotLetter(ciphertext);
 		}
 		if(ciphertext == null || ciphertext.length() == 0) {
 			return null;
 		}
-		ArrayList<CaesarMessage> messages = new ArrayList<>();
+		ArrayList<Message> messages = new ArrayList<>();
 		for(int key=0;key<LETTER_LENGTH;key++) {
 			String plaintext = decrypt(ciphertext, key,isReserveNotLetter,isIgnoreCase);
-			messages.add(new CaesarMessage(plaintext, key, ciphertext));
+			messages.add(new Message( key +"",plaintext,ciphertext));
 		}
 		return messages;
 	}
 	
-	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext,boolean isReserveNotLetter){
+	public static ArrayList<Message> exhaustCrack(String ciphertext,boolean isReserveNotLetter){
 		return exhaustCrack(ciphertext, isReserveNotLetter,true);
 	}
 	
-	public static ArrayList<CaesarMessage> exhaustCrack(String ciphertext){
+	public static ArrayList<Message> exhaustCrack(String ciphertext){
 		return exhaustCrack(ciphertext, true,true);
 	}
 	

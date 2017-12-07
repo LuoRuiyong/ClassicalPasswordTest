@@ -3,15 +3,10 @@ package com.luoruiyong.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-
-import javax.crypto.Cipher;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -24,7 +19,6 @@ import org.dom4j.io.XMLWriter;
 import com.luoruiyong.bean.Message;
 import com.luoruiyong.constant.ArithmeticType;
 import com.luoruiyong.constant.Status;
-import com.luoruiyong.myview.ArithmeticPanel;
 
 public class DocumentUtil {
 	public static final String FILE_PATH = "D:/setting.xml";
@@ -52,6 +46,7 @@ public class DocumentUtil {
         Element plaintext = caesarElement.addElement(SettingElement.PLAINTEXT);
         plaintext.setText("we are good childen!");
         Element ciphertext = caesarElement.addElement(SettingElement.CIPHERTEXT);
+        ciphertext.setText("zh duh jrrg fkloghq!");
         Element status = caesarElement.addElement(SettingElement.STATUS);
         status.setText(Status.NO_SECRET_KEY);
         
@@ -61,6 +56,7 @@ public class DocumentUtil {
         plaintext = playfairElement.addElement(SettingElement.PLAINTEXT);
         plaintext.setText("we are discovered save yourself");
         ciphertext = playfairElement.addElement(SettingElement.CIPHERTEXT);
+        ciphertext.setText("UGRMKCSXHMUFMKBTOXGCMVATLUGE");
         status = playfairElement.addElement(SettingElement.STATUS);
         status.setText(Status.NO_SECRET_KEY);
         
@@ -70,6 +66,7 @@ public class DocumentUtil {
         plaintext = hillElement.addElement(SettingElement.PLAINTEXT);
         plaintext.setText("pay more money");
         ciphertext = hillElement.addElement(SettingElement.CIPHERTEXT);
+        ciphertext.setText("LNSHDLEWMTRW");
         status = hillElement.addElement(SettingElement.STATUS);
         status.setText(Status.NO_SECRET_KEY);
         

@@ -1,97 +1,261 @@
 package com.luoruiyong.myview;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.StandardChartTheme;
-import org.jfree.data.general.DefaultPieDataset;
-import org.omg.CORBA.PUBLIC_MEMBER;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 
+import com.luoruiyong.bean.CaesarMessage;
+import com.luoruiyong.bean.Message;
 import com.luoruiyong.constant.ArithmeticType;
+import com.luoruiyong.constant.Status;
+import com.luoruiyong.password.Caesar;
+import com.luoruiyong.password.Hill;
+import com.luoruiyong.ui.MainFrameConstraints;
+import com.luoruiyong.util.CompareUtil;
+import com.luoruiyong.util.MatrixUtil;
 
 public class ResultAnalyzePanel extends JPanel {
 	
-	private JPanel groupAnalyzePanel;
-	private JPanel frequencyAnalyzePanel;
-	private JPanel objectAnaylyzePanel;
+	private static final long serialVersionUID = 1L;
+	// åˆ†ææ¿å—1ï¼Œåˆ†ç»„å¯¹æ¯”
+	private JPanel analyzePanel1;
 	private JTextArea taGroupData;
 	
+	// åˆ†ææ¿å—2ï¼ŒåŠ å¯†çŸ©é˜µï¼Œé¢‘ç‡æ‰‡å½¢å›¾è¡¨
+	private JPanel analyzePanel2;
+	private JPanel hillInverseMatrix;
+	private final int TYPE_ENCRYPT = 1;
+	private final int TYPE_DECRYPT = 2;
+	private final int TYPE_EXHAUST_CRACK = 3;
+	private final int TYPE_PROBABILITY_CRACK = 4;
+	
 	public ResultAnalyzePanel() {
-		frequencyAnalyzePanel = new JPanel();
-		objectAnaylyzePanel = new JPanel();
-		
-		groupAnalyzePanel = new JPanel();
-		groupAnalyzePanel.setLayout(new BorderLayout());
+		analyzePanel1 = new JPanel();
+		analyzePanel1.setLayout(new BorderLayout());
 		taGroupData = new JTextArea();
+		taGroupData.setLineWrap(true);  // è‡ªåŠ¨æ¢è¡Œ
+		taGroupData.setWrapStyleWord(true); // æ–­è¡Œä¸æ–­å­—
+		JScrollPane scrollPane = new JScrollPane(taGroupData);
 		taGroupData.setEditable(false);
-		groupAnalyzePanel.add(taGroupData,BorderLayout.CENTER);
+		taGroupData.setFont(new Font("å®‹ä½“", Font.PLAIN, 14));
+		analyzePanel1.add(scrollPane,BorderLayout.CENTER);
 		
-		setLayout(new GridLayout(1, 3));
-		add(groupAnalyzePanel);
-		add(frequencyAnalyzePanel);
-		add(objectAnaylyzePanel);
+		analyzePanel2 = new JPanel();
+		hillInverseMatrix = new JPanel();
+		hillInverseMatrix.setLayout(new GridLayout(3, 3));
 		
-		frequencyAnalyzePanel.setLayout(new CardLayout());
-		objectAnaylyzePanel.setLayout(new CardLayout());
-		//createPicture();
+		setLayout(new GridLayout(1,2,1,0));
+		add(analyzePanel1);
+		add(analyzePanel2);
+		//add(analyzePanel3);
+		analyzePanel1.setBorder(BorderFactory.createLineBorder(Color.orange,2));
+		analyzePanel2.setBorder(BorderFactory.createLineBorder(Color.orange,2));
+		analyzePanel2.setBackground(Color.white);
+		analyzePanel2.setLayout(new GridBagLayout());
 	}
 	
-	// ÉèÖÃÃÜÂëËã·¨¶ÔÓ¦µÄ½çÃæ
+	// è®¾ç½®å¯†ç ç®—æ³•å¯¹åº”çš„ç•Œé¢
 	public void setArithmeticType(ArithmeticType arithmeticType) {
-		switch (arithmeticType) {
-		case CAESAR:
-			// Çå³ı·Ö×é·ÖÎöÀïÃæµÄÄÚÈİ
+		taGroupData.setText("");
+		analyzePanel2.removeAll();
+	}
+	
+	public void updateInterface() {
+		taGroupData.setText("");
+		analyzePanel2.removeAll();
+	}
+	
+	public void showAnalyzeResult(Message message) {
+		int analyzeType = getAnalyzeType(message.getStatus());
+		groupCompareAnalyze(message,analyzeType);
+	}
+	
+	private void groupCompareAnalyze(Message message, int analyzeType) {
+		String plaintext = message.getPlaintext();
+		String ciphertext = message.getCiphertext();
+		String key = message.getKey();
+		int groupSize = getGroupSize(message.getArithmeticType());
+		ArrayList<Message> messages;
+		switch (analyzeType) {
+		case TYPE_ENCRYPT:
+			messages = CompareUtil.getDetailMessage(plaintext, ciphertext, groupSize);
+			if(messages == null) {
+				// é€šçŸ¥
+				taGroupData.setText("æ— åˆ†ææ•°æ®");
+			}else {
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append(">  åˆ†ç»„å¯¹æ¯”åˆ†æï¼š\n>  å¯†é’¥ï¼š"+key+"\n>  æ˜æ–‡ï¼š"+plaintext+"\n>  å¯†æ–‡ï¼š"+ciphertext+"\n>  æ˜æ–‡ç»„ å¯†æ–‡ç»„\n");
+				for(Message msg : messages) {
+					textBuilder.append(">  "+msg.getPlaintext()+" --> "+msg.getCiphertext()+"\n");
+				}
+				taGroupData.setText(textBuilder.toString());
+			}
 			break;
-		case PLAYFAIR:
-			frequencyAnalyzePanel.setVisible(false);
-			objectAnaylyzePanel.setVisible(false);
-			// Çå³ı·Ö×é·ÖÎöÀïÃæµÄÄÚÈİ
+		case TYPE_DECRYPT:
+			messages = CompareUtil.getDetailMessage(plaintext, ciphertext, groupSize);
+			if(messages == null) {
+				// é€šçŸ¥
+				taGroupData.setText("æ— åˆ†ææ•°æ®");
+			}else {
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append(">  åˆ†ç»„å¯¹æ¯”åˆ†æ\n>  å¯†é’¥ï¼š"+key+"\n>  å¯†æ–‡ï¼š"+ciphertext+"\n>  æ˜æ–‡ï¼š"+plaintext+"\n>  å¯†æ–‡ç»„ æ˜æ–‡ç»„\n");
+				for(Message msg : messages) {
+					textBuilder.append(">  "+msg.getCiphertext()+" --> "+msg.getPlaintext()+"\n");
+				}
+				taGroupData.setText(textBuilder.toString());
+			}
+			if(message.getArithmeticType() == ArithmeticType.HILL) {
+				showInverseMatrix(key);
+			}
+			break;
+		case TYPE_EXHAUST_CRACK:
+			ArrayList<Message> messages2 = Caesar.exhaustCrack(ciphertext);
+			ArrayList<ArrayList<Message>> list = CompareUtil.getCaesarExhaustCrackDetailMessage(messages2);
+			if(list == null) {
+				// é€šçŸ¥
+				taGroupData.setText("æ— åˆ†ææ•°æ®");
+			}else {
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append(">  ç©·ä¸¾æ³•ç ´è§£åˆ†ç»„å¯¹æ¯”\n");
+				for(int i = 0;i < list.size();i++) {
+					textBuilder.append(">>>- - - - - - - ç¬¬ "+(i+1)+" ç»„ - - - - - - - \n");
+					textBuilder.append(">  å¯èƒ½å¯†é’¥ï¼š"+i+"\n>  åŸå¯†æ–‡:"+ciphertext+"\n>  å¯èƒ½æ˜æ–‡ï¼š"+messages2.get(i).getPlaintext()+"\n>  å¯†æ–‡ç»„ æ˜æ–‡ç»„\n");
+					ArrayList<Message> messages3 = list.get(i);
+					for(Message msg : messages3) {
+						textBuilder.append(">  "+msg.getCiphertext()+" --> "+msg.getPlaintext()+"\n");
+					}
+				}
+				textBuilder.append(">  å…±æœ‰"+list.size()+"ç»„å¯èƒ½å¯†é’¥");
+				taGroupData.setText(textBuilder.toString());
+			}
 			break;
 			
-		case HILL:
-			frequencyAnalyzePanel.setVisible(false);
-			objectAnaylyzePanel.setVisible(false);
-			// Çå³ı·Ö×é·ÖÎöÀïÃæµÄÄÚÈİ
+		default:
+			CaesarMessage message2 = Caesar.autoCrack(ciphertext, true, false);
+			plaintext = message2.getPlaintext();
+			messages = CompareUtil.getDetailMessage(plaintext, ciphertext, groupSize);
+			if(messages == null) {
+				// é€šçŸ¥
+				taGroupData.setText("æ— åˆ†ææ•°æ®");
+			}else {
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append(">  æ¦‚ç‡ç ´è§£åˆ†ç»„å¯¹æ¯”åˆ†æï¼š\n>  å¯†æ–‡ï¼š"+ciphertext+"\n>  ç ´è§£å¾—åˆ°çš„å¯†é’¥ï¼š"+message2.getKey()+"\n>  ç ´è§£å¾—åˆ°çš„æ˜æ–‡ï¼š"+plaintext+"\n>  å¯†æ–‡ç»„ æ˜æ–‡ç»„\n");
+				for(Message msg : messages) {
+					textBuilder.append(">  "+msg.getCiphertext()+" --> "+msg.getPlaintext()+"\n");
+				}
+				textBuilder.append(">  å¯ä¿¡åº¦ï¼š"+message2.getSimilarity()+"%");
+				taGroupData.setText(textBuilder.toString());
+			}
+			showLineChart(ciphertext);
 			break;
 		}
 	}
 	
-	public void setGroupAnalyzeData(String data) {
-		taGroupData.setText(data);
+	public void showLineChart(String ciphertext) {
+		double[] frequency = Caesar.getLetterFrequency(ciphertext);
+		String series1 = "æ ‡å‡†å­—æ¯é¢‘ç‡";
+		String series2 = "å¯†æ–‡å­—æ¯é¢‘ç‡";
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		for(int i = 0;i< 26;i++) {
+			char ch = (char) (i+65);
+			dataset.setValue(Caesar.STANDARD_FREQUENCY[i]*100,series1,ch+"");
+			dataset.setValue(frequency[i]*100,series2,ch+"");
+		}
+		JFreeChart chart = ChartFactory.createLineChart("è‹±æ–‡å­—æ¯é¢‘ç‡æ›²çº¿å›¾",// ä¸»æ ‡é¢˜çš„åç§°
+					null,// Xè½´çš„æ ‡ç­¾
+					"é¢‘ç‡/%",// Yè½´çš„æ ‡ç­¾ 
+					dataset, // å›¾æ ‡æ˜¾ç¤ºçš„æ•°æ®é›†åˆ
+					PlotOrientation.VERTICAL, // å›¾åƒçš„æ˜¾ç¤ºå½¢å¼ï¼ˆæ°´å¹³æˆ–è€…å‚ç›´ï¼‰ 
+					true,// æ˜¯å¦æ˜¾ç¤ºå­æ ‡é¢˜ 
+					true,// æ˜¯å¦ç”Ÿæˆæç¤ºçš„æ ‡ç­¾ 
+					false); // æ˜¯å¦ç”ŸæˆURLé“¾æ¥ 
+		// å¤„ç†ä¸»æ ‡é¢˜çš„ä¹±ç  
+		 chart.getTitle().setFont(new Font("å®‹ä½“", Font.BOLD,10)); // å¤„ç†å­æ ‡é¢˜ä¹±ç  
+		 chart.getLegend().setItemFont(new Font("å®‹ä½“", Font.BOLD,10)); // è·å–å›¾è¡¨åŒºåŸŸå¯¹è±¡ 
+		 CategoryPlot categoryPlot = (CategoryPlot) chart.getPlot(); // è·å–Xè½´çš„å¯¹è±¡
+		 CategoryAxis categoryAxis = (CategoryAxis) categoryPlot.getDomainAxis(); // è·å–Yè½´çš„å¯¹è±¡
+		 NumberAxis numberAxis = (NumberAxis) categoryPlot.getRangeAxis(); // å¤„ç†Xè½´ä¸Šçš„ä¹±ç  
+		 categoryAxis.setTickLabelFont(new Font("å®‹ä½“", Font.BOLD, 10)); // å¤„ç†Xè½´å¤–çš„ä¹±ç  
+		 categoryAxis.setLabelFont(new Font("å®‹ä½“", Font.PLAIN, 10)); // å¤„ç†Yè½´ä¸Šçš„ä¹±ç 
+		 numberAxis.setTickLabelFont(new Font("å®‹ä½“", Font.BOLD,10)); // å¤„ç†Yè½´å¤–çš„ä¹±ç 
+		 numberAxis.setLabelFont(new Font("å®‹ä½“", Font.BOLD, 10)); // å¤„ç†Yè½´ä¸Šæ˜¾ç¤ºçš„åˆ»åº¦ï¼Œä»¥10ä½œä¸º1æ ¼
+		 numberAxis.setAutoTickUnitSelection(false);
+		 NumberTickUnit unit = new NumberTickUnit(2); 
+		 numberAxis.setTickUnit(unit); 
+		 ChartPanel panel = new ChartPanel(chart);
+		 panel.setPreferredSize(analyzePanel2.getPreferredSize());
+		 analyzePanel2.removeAll();
+		 analyzePanel2.add(panel,new MainFrameConstraints(0, 0).setFill(GridBagConstraints.BOTH).setWeight(100, 100));
 	}
 	
-	public void createPicture() {
-		DefaultPieDataset dpd=new DefaultPieDataset(); //½¨Á¢Ò»¸öÄ¬ÈÏµÄ±ıÍ¼
-        dpd.setValue("¹ÜÀíÈËÔ±", 25);  //ÊäÈëÊı¾İ
-        dpd.setValue("ÊĞ³¡ÈËÔ±", 25);
-        dpd.setValue("¿ª·¢ÈËÔ±", 45);
-        dpd.setValue("ÆäËûÈËÔ±", 10);
-        StandardChartTheme standardChartTheme = new StandardChartTheme("CN");
-        standardChartTheme.setExtraLargeFont(new Font("Á¥Êé", Font.BOLD, 10));
-        standardChartTheme.setRegularFont(new Font("ËÎÊé", Font.PLAIN, 8));
-        standardChartTheme.setLargeFont(new Font("ËÎÊé", Font.PLAIN, 8));
-        ChartFactory.setChartTheme(standardChartTheme);
-        JFreeChart chart=ChartFactory.createPieChart("Ä³¹«Ë¾ÈËÔ±×éÖ¯Êı¾İÍ¼",dpd,true,true,false); 
-        //¿ÉÒÔ²é¾ßÌåµÄAPIÎÄµµ,µÚÒ»¸ö²ÎÊıÊÇ±êÌâ£¬µÚ¶ş¸ö²ÎÊıÊÇÒ»¸öÊı¾İ¼¯£¬µÚÈı¸ö²ÎÊı±íÊ¾ÊÇ·ñÏÔÊ¾Legend£¬µÚËÄ¸ö²ÎÊı±íÊ¾ÊÇ·ñÏÔÊ¾ÌáÊ¾£¬µÚÎå¸ö²ÎÊı±íÊ¾Í¼ÖĞÊÇ·ñ´æÔÚURL
-        ChartPanel panel=new ChartPanel(chart); 
-        ChartPanel panel2 = new ChartPanel(chart);
-        panel.setPreferredSize(frequencyAnalyzePanel.getPreferredSize());
-        panel2.setPreferredSize(objectAnaylyzePanel.getPreferredSize());
-        //chartÒª·ÅÔÚJavaÈİÆ÷×é¼şÖĞ£¬ChartFrame¼Ì³Ğ×ÔjavaµÄJframeÀà¡£¸ÃµÚÒ»¸ö²ÎÊıµÄÊı¾İÊÇ·ÅÔÚ´°¿Ú×óÉÏ½ÇµÄ£¬²»ÊÇÕıÖĞ¼äµÄ±êÌâ¡£
-        frequencyAnalyzePanel.add(panel);
-        objectAnaylyzePanel.add(panel2);
-        //objectAnaylyzePanel.add(panel);
+	private void showInverseMatrix(String key) {
+		int[][] matrixData = Hill.isKeyAvailable(key);
+		matrixData = MatrixUtil.getForceInverseMatrix(matrixData);
+		hillInverseMatrix = new JPanel();
+		hillInverseMatrix.setLayout(new GridLayout(3, 3));
+		hillInverseMatrix.setBorder(BorderFactory.createLineBorder(Color.black,1));
+		hillInverseMatrix.removeAll();
+		for(int i = 0;i < 9;i++) {
+			JLabel label = new JLabel(" "+matrixData[i/3][i%3]+" ",JLabel.CENTER);
+			label.setBorder(BorderFactory.createLineBorder(Color.black,1));
+			label.setMinimumSize(new Dimension(30, 30));
+			hillInverseMatrix.add(label);
+		}
+		analyzePanel2.removeAll();
+		analyzePanel2.add(new JLabel("å¯†é’¥é€†çŸ©é˜µ",JLabel.CENTER));
+		analyzePanel2.add(hillInverseMatrix,new MainFrameConstraints(0, 1).setWeight(1, 0));
 	}
 	
+	// è·å–åˆ†æç±»å‹ï¼šåŠ å¯†ã€è§£å¯†ã€ç©·ä¸¾ç ´è§£ã€æ¦‚ç‡ç ´è§£
+	private int getAnalyzeType(String status) {
+		int type;
+		if(status.equals(Status.ENCRYPT_ANALYSIS)) {
+			type = TYPE_ENCRYPT;
+		}else if(status.equals(Status.DECRYPT_ANALYSIS)){
+			type = TYPE_DECRYPT;
+		}else if(status.equals(Status.EXHAUST_CRACK_ANAYLYZE)){
+			type = TYPE_EXHAUST_CRACK;
+		}else{
+			type = TYPE_PROBABILITY_CRACK;
+		}
+		return type;
+	}
+	
+	// è·å–ä¸€ä¸ªåˆ†ç»„å¤§å°ï¼šCaesarä¸º1ï¼ŒPlayfairä¸º2ï¼ŒHillä¸º3
+	private int getGroupSize(ArithmeticType type) {
+		int size;
+		switch (type) {
+		case CAESAR:
+			size = 1;
+			break;
+		case PLAYFAIR:
+			size = 2;
+			break;
+		default:
+			size = 3;
+			break;
+		}
+		return size;
+	}
 }

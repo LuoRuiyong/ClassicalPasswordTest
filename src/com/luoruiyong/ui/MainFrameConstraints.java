@@ -2,13 +2,11 @@ package com.luoruiyong.ui;
 
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.Robot;
-
-import org.omg.CORBA.PUBLIC_MEMBER;
-import org.omg.PortableServer.ServantActivator;
 
 public class MainFrameConstraints extends GridBagConstraints {
 	
+	private static final long serialVersionUID = 1L;
+
 	// 初始化话左上角位置
 	public MainFrameConstraints(int gridx,int gridy) {
 		this.gridx = gridx;
